@@ -1,0 +1,1078 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conway's Game of Life</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-deep: #0a0a0f;
+            --bg-surface: #12121a;
+            --grid-line: #1a1a2e;
+            --cell-dead: #0d0d14;
+            --cell-alive: #00ff88;
+            --cell-glow: rgba(0, 255, 136, 0.4);
+            --accent-hot: #ff006e;
+            --accent-cool: #00d4ff;
+            --text-primary: #e0e0e0;
+            --text-muted: #666680;
+            --transition: cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'JetBrains Mono', monospace;
+            background: var(--bg-deep);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Scanline overlay effect */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: repeating-linear-gradient(
+                0deg,
+                transparent,
+                transparent 2px,
+                rgba(0, 0, 0, 0.03) 2px,
+                rgba(0, 0, 0, 0.03) 4px
+            );
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        .app {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 24px;
+            background: linear-gradient(135deg, rgba(26, 26, 46, 0.8), rgba(18, 18, 26, 0.9));
+            border: 1px solid var(--grid-line);
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .logo-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, var(--cell-alive), var(--accent-cool));
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 30px var(--cell-glow);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 20px var(--cell-glow); }
+            50% { box-shadow: 0 0 40px var(--cell-glow); }
+        }
+
+        .logo-text h1 {
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            background: linear-gradient(90deg, var(--cell-alive), var(--accent-cool));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .logo-text p {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .stats {
+            display: flex;
+            gap: 32px;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--accent-cool);
+            text-shadow: 0 0 20px rgba(0, 212, 255, 0.5);
+        }
+
+        .stat-label {
+            font-size: 11px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-top: 4px;
+        }
+
+        /* Grid Container */
+        .grid-container {
+            position: relative;
+            background: var(--bg-surface);
+            border: 1px solid var(--grid-line);
+            border-radius: 12px;
+            padding: 16px;
+            overflow: hidden;
+        }
+
+        .grid-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 200px;
+            background: radial-gradient(ellipse at center top, rgba(0, 255, 136, 0.05), transparent);
+            pointer-events: none;
+        }
+
+        .grid-canvas {
+            display: grid;
+            gap: 1px;
+            background: var(--grid-line);
+            border-radius: 4px;
+            overflow: hidden;
+            cursor: crosshair;
+            user-select: none;
+        }
+
+        .cell {
+            background: var(--cell-dead);
+            aspect-ratio: 1;
+            transition: all 0.15s var(--transition);
+        }
+
+        .cell.alive {
+            background: var(--cell-alive);
+            box-shadow: 0 0 10px var(--cell-glow), inset 0 0 5px rgba(255, 255, 255, 0.3);
+        }
+
+        .cell:hover {
+            outline: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .cell.alive:hover {
+            outline: 1px solid var(--cell-alive);
+        }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            padding: 20px;
+            background: linear-gradient(135deg, rgba(26, 26, 46, 0.8), rgba(18, 18, 26, 0.9));
+            border: 1px solid var(--grid-line);
+            border-radius: 12px;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .control-label {
+            font-size: 11px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 20px;
+            border: 1px solid var(--grid-line);
+            border-radius: 8px;
+            background: var(--bg-surface);
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s var(--transition);
+        }
+
+        .btn:hover {
+            background: var(--grid-line);
+            border-color: var(--accent-cool);
+            transform: translateY(-1px);
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .btn.primary {
+            background: linear-gradient(135deg, var(--cell-alive), #00cc6a);
+            border-color: var(--cell-alive);
+            color: #0a0a0f;
+            box-shadow: 0 0 20px var(--cell-glow);
+        }
+
+        .btn.primary:hover {
+            box-shadow: 0 0 30px var(--cell-glow);
+        }
+
+        .btn.danger {
+            border-color: var(--accent-hot);
+            color: var(--accent-hot);
+        }
+
+        .btn.danger:hover {
+            background: rgba(255, 0, 110, 0.1);
+            box-shadow: 0 0 20px rgba(255, 0, 110, 0.3);
+        }
+
+        .btn.active {
+            background: linear-gradient(135deg, var(--accent-hot), #cc0057);
+            border-color: var(--accent-hot);
+            color: white;
+            box-shadow: 0 0 20px rgba(255, 0, 110, 0.4);
+        }
+
+        .btn svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        /* Slider */
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .slider {
+            -webkit-appearance: none;
+            width: 150px;
+            height: 6px;
+            background: var(--grid-line);
+            border-radius: 3px;
+            outline: none;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            background: var(--accent-cool);
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
+            transition: all 0.2s;
+        }
+
+        .slider::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.8);
+        }
+
+        .slider-value {
+            min-width: 80px;
+            font-size: 14px;
+            color: var(--accent-cool);
+        }
+
+        /* Preset buttons */
+        .preset-btn {
+            padding: 8px 16px;
+            border: 1px solid var(--grid-line);
+            border-radius: 6px;
+            background: transparent;
+            color: var(--text-muted);
+            font-family: inherit;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .preset-btn:hover {
+            border-color: var(--accent-cool);
+            color: var(--accent-cool);
+        }
+
+        .preset-btn.active {
+            background: var(--accent-cool);
+            border-color: var(--accent-cool);
+            color: var(--bg-deep);
+        }
+
+        /* Rules */
+        .rules {
+            padding: 20px 24px;
+            background: linear-gradient(135deg, rgba(26, 26, 46, 0.6), rgba(18, 18, 26, 0.8));
+            border: 1px solid var(--grid-line);
+            border-radius: 12px;
+        }
+
+        .rules h3 {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: var(--accent-cool);
+        }
+
+        .rules-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+        }
+
+        .rule {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .rule-icon {
+            flex-shrink: 0;
+            width: 24px;
+            height: 24px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: 700;
+        }
+
+        .rule-icon.born {
+            background: rgba(0, 255, 136, 0.2);
+            color: var(--cell-alive);
+        }
+
+        .rule-icon.survive {
+            background: rgba(0, 212, 255, 0.2);
+            color: var(--accent-cool);
+        }
+
+        .rule-icon.die {
+            background: rgba(255, 0, 110, 0.2);
+            color: var(--accent-hot);
+        }
+
+        /* Loading */
+        .loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #0a0a0f;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            z-index: 10000;
+        }
+
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 3px solid var(--grid-line);
+            border-top-color: var(--cell-alive);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            color: #888899;
+            font-size: 14px;
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            padding: 16px 24px;
+            background: var(--bg-surface);
+            border: 1px solid var(--cell-alive);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 14px;
+            box-shadow: 0 0 30px var(--cell-glow);
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s var(--transition);
+            z-index: 100;
+        }
+
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                gap: 20px;
+            }
+
+            .stats {
+                width: 100%;
+                justify-content: space-around;
+            }
+
+            .controls {
+                flex-direction: column;
+            }
+
+            .button-group {
+                flex-wrap: wrap;
+            }
+
+            .btn {
+                flex: 1;
+                min-width: 100px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="root">
+        <div class="loading">
+            <div class="loading-spinner"></div>
+            <div class="loading-text">Initializing Life Engine...</div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <script type="text/babel">
+        const { useState, useEffect, useCallback, useRef } = React;
+
+        // API Configuration
+        const API_BASE = 'http://localhost:8080';
+
+        // Icons as SVG components
+        const PlayIcon = () => (
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polygon points="5 3 19 12 5 21 5 3"></polygon>
+            </svg>
+        );
+
+        const PauseIcon = () => (
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="6" y="4" width="4" height="16"></rect>
+                <rect x="14" y="4" width="4" height="16"></rect>
+            </svg>
+        );
+
+        const StepIcon = () => (
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polygon points="5 4 15 12 5 20 5 4"></polygon>
+                <line x1="19" y1="5" x2="19" y2="19"></line>
+            </svg>
+        );
+
+        const RefreshIcon = () => (
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="23 4 23 10 17 10"></polyline>
+                <polyline points="1 20 1 14 7 14"></polyline>
+                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+            </svg>
+        );
+
+        const TrashIcon = () => (
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            </svg>
+        );
+
+        // Game Hook
+        const useGameState = () => {
+            const [gameState, setGameState] = useState(null);
+            const [isPlaying, setIsPlaying] = useState(false);
+            const [speed, setSpeed] = useState(10);
+            const [gridSize, setGridSize] = useState({ width: 60, height: 40 });
+            const [cellSize, setCellSize] = useState(12);
+            const [isLoading, setIsLoading] = useState(true);
+            const [error, setError] = useState(null);
+            const [toast, setToast] = useState({ show: false, message: '' });
+            const intervalRef = useRef(null);
+
+            // Show toast notification
+            const showToast = useCallback((message) => {
+                setToast({ show: true, message });
+                setTimeout(() => setToast({ show: false, message: '' }), 2000);
+            }, []);
+
+            // Fetch current state
+            const fetchState = useCallback(async () => {
+                try {
+                    const response = await fetch(`${API_BASE}/api/state`);
+                    if (!response.ok) throw new Error('Failed to fetch state');
+                    const data = await response.json();
+                    setGameState(data);
+                    setGridSize({ width: data.width, height: data.height });
+                    setIsLoading(false);
+                } catch (err) {
+                    setError(err.message);
+                    setIsLoading(false);
+                }
+            }, []);
+
+            // Initialize grid
+            const initGrid = useCallback(async (width, height) => {
+                try {
+                    const response = await fetch(`${API_BASE}/api/init`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ width, height }),
+                    });
+                    const data = await response.json();
+                    setGameState(data);
+                    setGridSize({ width, height });
+                    showToast(`Grid initialized: ${width}x${height}`);
+                } catch (err) {
+                    setError(err.message);
+                }
+            }, [showToast]);
+
+            // Toggle cell
+            const toggleCell = useCallback(async (x, y) => {
+                try {
+                    const response = await fetch(`${API_BASE}/api/toggle/${x}/${y}`, {
+                        method: 'POST',
+                    });
+                    const data = await response.json();
+                    setGameState(data);
+                } catch (err) {
+                    setError(err.message);
+                }
+            }, []);
+
+            // Set cell alive (for painting)
+            const setCellAlive = useCallback(async (x, y) => {
+                try {
+                    const response = await fetch(`${API_BASE}/api/set_alive/${x}/${y}`, {
+                        method: 'POST',
+                    });
+                    const data = await response.json();
+                    setGameState(data);
+                } catch (err) {
+                    setError(err.message);
+                }
+            }, []);
+
+            // Set cell dead (for erasing)
+            const setCellDead = useCallback(async (x, y) => {
+                try {
+                    const response = await fetch(`${API_BASE}/api/set_dead/${x}/${y}`, {
+                        method: 'POST',
+                    });
+                    const data = await response.json();
+                    setGameState(data);
+                } catch (err) {
+                    setError(err.message);
+                }
+            }, []);
+
+            // Step one generation
+            const step = useCallback(async () => {
+                try {
+                    const response = await fetch(`${API_BASE}/api/step`, {
+                        method: 'POST',
+                    });
+                    const data = await response.json();
+                    setGameState(data);
+                } catch (err) {
+                    setError(err.message);
+                }
+            }, []);
+
+            // Randomize grid
+            const randomize = useCallback(async (density = 0.3) => {
+                try {
+                    const response = await fetch(`${API_BASE}/api/randomize`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ density }),
+                    });
+                    const data = await response.json();
+                    setGameState(data);
+                    showToast('Grid randomized');
+                } catch (err) {
+                    setError(err.message);
+                }
+            }, [showToast]);
+
+            // Clear grid
+            const clear = useCallback(async () => {
+                try {
+                    const response = await fetch(`${API_BASE}/api/clear`, {
+                        method: 'POST',
+                    });
+                    const data = await response.json();
+                    setGameState(data);
+                    setIsPlaying(false);
+                    showToast('Grid cleared');
+                } catch (err) {
+                    setError(err.message);
+                }
+            }, [showToast]);
+
+            // Play/Pause toggle
+            const togglePlay = useCallback(() => {
+                setIsPlaying(prev => !prev);
+            }, []);
+
+            // Handle resize
+            const resize = useCallback((preset) => {
+                const sizes = {
+                    small: { width: 30, height: 20, cell: 16 },
+                    medium: { width: 60, height: 40, cell: 12 },
+                    large: { width: 80, height: 50, cell: 10 },
+                };
+                const config = sizes[preset] || sizes.medium;
+                initGrid(config.width, config.height);
+                setCellSize(config.cell);
+            }, [initGrid]);
+
+            // Auto-step effect
+            useEffect(() => {
+                if (isPlaying) {
+                    intervalRef.current = setInterval(step, 1000 / speed);
+                } else {
+                    if (intervalRef.current) {
+                        clearInterval(intervalRef.current);
+                    }
+                }
+                return () => {
+                    if (intervalRef.current) {
+                        clearInterval(intervalRef.current);
+                    }
+                };
+            }, [isPlaying, speed, step]);
+
+            // Initial fetch
+            useEffect(() => {
+                fetchState();
+            }, [fetchState]);
+
+            return {
+                gameState,
+                isPlaying,
+                setIsPlaying,
+                speed,
+                setSpeed,
+                gridSize,
+                cellSize,
+                isLoading,
+                error,
+                toast,
+                togglePlay,
+                step,
+                randomize,
+                clear,
+                toggleCell,
+                setCellAlive,
+                setCellDead,
+                resize,
+            };
+        };
+
+        // Grid Component
+        const GridCanvas = ({ cells, width, height, cellSize, onCellToggle, onCellPaint, onCellErase }) => {
+            const canvasRef = useRef(null);
+            const isPaintingRef = useRef(false);
+            const isErasingRef = useRef(false);
+
+            const getCellFromEvent = (e) => {
+                const rect = canvasRef.current.getBoundingClientRect();
+                const x = Math.floor((e.clientX - rect.left) / (cellSize + 1));
+                const y = Math.floor((e.clientY - rect.top) / (cellSize + 1));
+                return { x, y };
+            };
+
+            const handleMouseDown = (e, x, y) => {
+                e.preventDefault();
+                if (e.button === 2) {
+                    // Right click - erase
+                    isErasingRef.current = true;
+                    onCellErase(x, y);
+                } else {
+                    // Left click - paint
+                    isPaintingRef.current = true;
+                    onCellToggle(x, y);
+                }
+            };
+
+            const handleMouseEnter = (e, x, y) => {
+                if (isPaintingRef.current) {
+                    onCellPaint(x, y);
+                } else if (isErasingRef.current) {
+                    onCellErase(x, y);
+                }
+            };
+
+            const handleMouseUp = () => {
+                isPaintingRef.current = false;
+                isErasingRef.current = false;
+            };
+
+            const handleContextMenu = (e) => {
+                e.preventDefault();
+            };
+
+            useEffect(() => {
+                const handleGlobalMouseUp = () => {
+                    isPaintingRef.current = false;
+                    isErasingRef.current = false;
+                };
+                window.addEventListener('mouseup', handleGlobalMouseUp);
+                return () => window.removeEventListener('mouseup', handleGlobalMouseUp);
+            }, []);
+
+            return (
+                <div
+                    ref={canvasRef}
+                    className="grid-canvas"
+                    style={{
+                        gridTemplateColumns: `repeat(${width}, ${cellSize}px)`,
+                        gridTemplateRows: `repeat(${height}, ${cellSize}px)`,
+                    }}
+                    onContextMenu={handleContextMenu}
+                >
+                    {cells && cells.map((row, y) =>
+                        row.map((cell, x) => (
+                            <div
+                                key={`${x}-${y}`}
+                                className={`cell ${cell ? 'alive' : ''}`}
+                                onMouseDown={(e) => handleMouseDown(e, x, y)}
+                                onMouseEnter={(e) => handleMouseEnter(e, x, y)}
+                            />
+                        ))
+                    )}
+                </div>
+            );
+        };
+
+        // Control Panel Component
+        const ControlPanel = ({
+            isPlaying,
+            onTogglePlay,
+            onStep,
+            onRandomize,
+            onClear,
+            speed,
+            onSpeedChange,
+            currentPreset,
+            onResize,
+        }) => {
+            return (
+                <div className="controls">
+                    <div className="control-group">
+                        <span className="control-label">Simulation</span>
+                        <div className="button-group">
+                            <button className={`btn ${isPlaying ? 'active' : 'primary'}`} onClick={onTogglePlay}>
+                                {isPlaying ? <PauseIcon /> : <PlayIcon />}
+                                {isPlaying ? 'Pause' : 'Play'}
+                            </button>
+                            <button className="btn" onClick={onStep}>
+                                <StepIcon />
+                                Step
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="control-group">
+                        <span className="control-label">Population</span>
+                        <div className="button-group">
+                            <button className="btn" onClick={() => onRandomize(0.3)}>
+                                <RefreshIcon />
+                                Random
+                            </button>
+                            <button className="btn danger" onClick={onClear}>
+                                <TrashIcon />
+                                Clear
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="control-group">
+                        <span className="control-label">Speed</span>
+                        <div className="slider-container">
+                            <input
+                                type="range"
+                                className="slider"
+                                min="1"
+                                max="30"
+                                value={speed}
+                                onChange={(e) => onSpeedChange(Number(e.target.value))}
+                            />
+                            <span className="slider-value">{speed} gen/s</span>
+                        </div>
+                    </div>
+
+                    <div className="control-group">
+                        <span className="control-label">Grid Size</span>
+                        <div className="button-group">
+                            <button
+                                className={`preset-btn ${currentPreset === 'small' ? 'active' : ''}`}
+                                onClick={() => onResize('small')}
+                            >
+                                Small
+                            </button>
+                            <button
+                                className={`preset-btn ${currentPreset === 'medium' ? 'active' : ''}`}
+                                onClick={() => onResize('medium')}
+                            >
+                                Medium
+                            </button>
+                            <button
+                                className={`preset-btn ${currentPreset === 'large' ? 'active' : ''}`}
+                                onClick={() => onResize('large')}
+                            >
+                                Large
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // Rules Component
+        const Rules = () => (
+            <div className="rules">
+                <h3>Conway's Rules</h3>
+                <div className="rules-grid">
+                    <div className="rule">
+                        <div className="rule-icon die">1</div>
+                        <span>Loneliness: Live cells with fewer than 2 neighbors die</span>
+                    </div>
+                    <div className="rule">
+                        <div className="rule-icon survive">2</div>
+                        <span>Stability: Live cells with 2-3 neighbors survive</span>
+                    </div>
+                    <div className="rule">
+                        <div className="rule-icon die">3</div>
+                        <span>Overcrowding: Live cells with more than 3 neighbors die</span>
+                    </div>
+                    <div className="rule">
+                        <div className="rule-icon born">4</div>
+                        <span>Birth: Dead cells with exactly 3 neighbors become alive</span>
+                    </div>
+                </div>
+            </div>
+        );
+
+        // Toast Component
+        const Toast = ({ show, message }) => (
+            <div className={`toast ${show ? 'show' : ''}`}>
+                {message}
+            </div>
+        );
+
+        // Error Screen Component
+        const ErrorScreen = ({ message }) => (
+            <div className="app" style={{ justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
+                <div style={{ textAlign: 'center', padding: '40px' }}>
+                    <div style={{
+                        width: '80px',
+                        height: '80px',
+                        margin: '0 auto 24px',
+                        background: 'rgba(255, 0, 110, 0.2)',
+                        borderRadius: '50%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                    }}>
+                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#ff006e" strokeWidth="2">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="8" x2="12" y2="12"></line>
+                            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                        </svg>
+                    </div>
+                    <h2 style={{ marginBottom: '12px', color: '#ff006e' }}>Connection Failed</h2>
+                    <p style={{ color: '#666680', marginBottom: '24px' }}>
+                        Unable to connect to the Game of Life server.
+                    </p>
+                    <p style={{ color: '#666680', fontSize: '14px' }}>
+                        Please ensure the Rust backend is running:<br />
+                        <code style={{
+                            background: '#1a1a2e',
+                            padding: '4px 8px',
+                            borderRadius: '4px',
+                            fontFamily: 'JetBrains Mono, monospace'
+                        }}>
+                            cargo run
+                        </code>
+                    </p>
+                    <p style={{ color: '#666680', fontSize: '12px', marginTop: '8px' }}>
+                        Error: {message}
+                    </p>
+                </div>
+            </div>
+        );
+
+        // Main App Component
+        const App = () => {
+            const {
+                gameState,
+                isPlaying,
+                speed,
+                setSpeed,
+                gridSize,
+                cellSize,
+                isLoading,
+                error,
+                toast,
+                togglePlay,
+                step,
+                randomize,
+                clear,
+                toggleCell,
+                setCellAlive,
+                setCellDead,
+                resize,
+            } = useGameState();
+
+            if (isLoading) {
+                return (
+                    <div className="loading">
+                        <div className="loading-spinner"></div>
+                        <div className="loading-text">Initializing Life Engine...</div>
+                    </div>
+                );
+            }
+
+            if (error) {
+                return <ErrorScreen message={error} />;
+            }
+
+            const totalCells = gridSize.width * gridSize.height;
+            const currentPreset = totalCells === 600 ? 'medium' : totalCells === 30 * 20 ? 'small' : totalCells === 80 * 50 ? 'large' : null;
+
+            return (
+                <div className="app">
+                    {/* Header */}
+                    <header className="header">
+                        <div className="logo">
+                            <div className="logo-icon">
+                                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#0a0a0f" strokeWidth="2.5">
+                                    <rect x="3" y="3" width="7" height="7"></rect>
+                                    <rect x="14" y="3" width="7" height="7"></rect>
+                                    <rect x="14" y="14" width="7" height="7"></rect>
+                                    <rect x="3" y="14" width="7" height="7"></rect>
+                                </svg>
+                            </div>
+                            <div className="logo-text">
+                                <h1>Conway's Game of Life</h1>
+                                <p>Cellular Automaton Simulator</p>
+                            </div>
+                        </div>
+                        <div className="stats">
+                            <div className="stat">
+                                <div className="stat-value">{gameState?.generation || 0}</div>
+                                <div className="stat-label">Generation</div>
+                            </div>
+                            <div className="stat">
+                                <div className="stat-value">{gameState?.population || 0}</div>
+                                <div className="stat-label">Population</div>
+                            </div>
+                            <div className="stat">
+                                <div className="stat-value" style={{ fontSize: '20px' }}>
+                                    {totalCells > 0 ? ((gameState?.population || 0) / totalCells * 100).toFixed(1) : 0}%
+                                </div>
+                                <div className="stat-label">Density</div>
+                            </div>
+                        </div>
+                    </header>
+
+                    {/* Grid */}
+                    <div className="grid-container">
+                        <GridCanvas
+                            cells={gameState?.cells}
+                            width={gridSize.width}
+                            height={gridSize.height}
+                            cellSize={cellSize}
+                            onCellToggle={toggleCell}
+                            onCellPaint={setCellAlive}
+                            onCellErase={setCellDead}
+                        />
+                    </div>
+
+                    {/* Controls */}
+                    <ControlPanel
+                        isPlaying={isPlaying}
+                        onTogglePlay={togglePlay}
+                        onStep={step}
+                        onRandomize={randomize}
+                        onClear={clear}
+                        speed={speed}
+                        onSpeedChange={setSpeed}
+                        currentPreset={currentPreset}
+                        onResize={resize}
+                    />
+
+                    {/* Rules */}
+                    <Rules />
+
+                    {/* Toast */}
+                    <Toast show={toast.show} message={toast.message} />
+                </div>
+            );
+        };
+
+        // Render App
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
