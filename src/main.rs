@@ -1,7 +1,7 @@
-//! Conway's Game of Life - Main Entry Point
+//! Two-Faction Game of Life - Main Entry Point
 //!
-//! A web server implementing Conway's Game of Life simulation
-//! with an interactive REST API.
+//! A web server implementing a two-faction variant of Conway's Game of Life
+//! with red vs blue competing cells and majority-principle reproduction.
 
 mod api;
 mod game;
@@ -26,7 +26,7 @@ async fn main() {
         .with(tracing_subscriber::fmt::layer())
         .init();
 
-    info!("Starting Conway's Game of Life server...");
+    info!("Starting Two-Faction Game of Life server...");
 
     // Create initial game state (60x40 grid)
     let game_state = GameState::new(60, 40);
@@ -48,14 +48,15 @@ async fn main() {
 
     info!("Server listening on http://127.0.0.1:8080");
     info!("API endpoints:");
-    info!("  GET  /api/state      - Get current game state");
-    info!("  POST /api/init       - Initialize grid (width, height)");
-    info!("  POST /api/toggle/:x/:y - Toggle cell");
-    info!("  POST /api/set_alive/:x/:y - Set cell alive");
-    info!("  POST /api/set_dead/:x/:y - Set cell dead");
-    info!("  POST /api/step       - Advance one generation");
-    info!("  POST /api/randomize   - Randomize (density)");
-    info!("  POST /api/clear       - Clear grid");
+    info!("  GET  /api/state         - Get current game state");
+    info!("  POST /api/init          - Initialize grid (width, height)");
+    info!("  POST /api/toggle/:x/:y  - Toggle cell (cycles: dead -> red -> blue -> dead)");
+    info!("  POST /api/set_red/:x/:y  - Set cell to red (team 1)");
+    info!("  POST /api/set_blue/:x/:y - Set cell to blue (team 2)");
+    info!("  POST /api/set_dead/:x/:y - Set cell to dead");
+    info!("  POST /api/step           - Advance one generation");
+    info!("  POST /api/randomize      - Randomize (density)");
+    info!("  POST /api/clear          - Clear grid");
 
     axum::serve(listener, app)
         .await

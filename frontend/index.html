@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Conway's Game of Life</title>
+    <title>两阵营生命游戏</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -13,10 +13,12 @@
             --bg-surface: #12121a;
             --grid-line: #1a1a2e;
             --cell-dead: #0d0d14;
-            --cell-alive: #00ff88;
-            --cell-glow: rgba(0, 255, 136, 0.4);
-            --accent-hot: #ff006e;
-            --accent-cool: #00d4ff;
+            --cell-red: #ff3366;
+            --cell-red-glow: rgba(255, 51, 102, 0.5);
+            --cell-blue: #3366ff;
+            --cell-blue-glow: rgba(51, 102, 255, 0.5);
+            --accent-red: #ff3366;
+            --accent-blue: #3366ff;
             --text-primary: #e0e0e0;
             --text-muted: #666680;
             --transition: cubic-bezier(0.4, 0, 0.2, 1);
@@ -85,25 +87,25 @@
         .logo-icon {
             width: 48px;
             height: 48px;
-            background: linear-gradient(135deg, var(--cell-alive), var(--accent-cool));
+            background: linear-gradient(135deg, var(--cell-red), var(--cell-blue));
             border-radius: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 0 30px var(--cell-glow);
+            box-shadow: 0 0 20px rgba(255, 51, 102, 0.3);
             animation: pulse 2s ease-in-out infinite;
         }
 
         @keyframes pulse {
-            0%, 100% { box-shadow: 0 0 20px var(--cell-glow); }
-            50% { box-shadow: 0 0 40px var(--cell-glow); }
+            0%, 100% { box-shadow: 0 0 20px rgba(255, 51, 102, 0.3), 0 0 20px rgba(51, 102, 255, 0.3); }
+            50% { box-shadow: 0 0 40px rgba(255, 51, 102, 0.5), 0 0 40px rgba(51, 102, 255, 0.5); }
         }
 
         .logo-text h1 {
             font-size: 24px;
             font-weight: 700;
             letter-spacing: -0.02em;
-            background: linear-gradient(90deg, var(--cell-alive), var(--accent-cool));
+            background: linear-gradient(90deg, var(--cell-red), var(--cell-blue));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
@@ -117,18 +119,20 @@
 
         .stats {
             display: flex;
-            gap: 32px;
+            gap: 24px;
+            align-items: center;
         }
 
         .stat {
             text-align: center;
+            padding: 8px 16px;
+            border-radius: 8px;
+            background: rgba(26, 26, 46, 0.5);
         }
 
         .stat-value {
-            font-size: 32px;
+            font-size: 28px;
             font-weight: 700;
-            color: var(--accent-cool);
-            text-shadow: 0 0 20px rgba(0, 212, 255, 0.5);
         }
 
         .stat-label {
@@ -137,6 +141,20 @@
             text-transform: uppercase;
             letter-spacing: 0.1em;
             margin-top: 4px;
+        }
+
+        .stat.red .stat-value {
+            color: var(--cell-red);
+            text-shadow: 0 0 20px var(--cell-red-glow);
+        }
+
+        .stat.blue .stat-value {
+            color: var(--cell-blue);
+            text-shadow: 0 0 20px var(--cell-blue-glow);
+        }
+
+        .stat.generation .stat-value {
+            color: var(--text-primary);
         }
 
         /* Grid Container */
@@ -156,7 +174,7 @@
             left: 0;
             right: 0;
             height: 200px;
-            background: radial-gradient(ellipse at center top, rgba(0, 255, 136, 0.05), transparent);
+            background: radial-gradient(ellipse at center top, rgba(255, 51, 102, 0.03), rgba(51, 102, 255, 0.03), transparent);
             pointer-events: none;
         }
 
@@ -176,17 +194,22 @@
             transition: all 0.15s var(--transition);
         }
 
-        .cell.alive {
-            background: var(--cell-alive);
-            box-shadow: 0 0 10px var(--cell-glow), inset 0 0 5px rgba(255, 255, 255, 0.3);
+        .cell.red {
+            background: var(--cell-red);
+            box-shadow: 0 0 8px var(--cell-red-glow), inset 0 0 4px rgba(255, 255, 255, 0.2);
+        }
+
+        .cell.blue {
+            background: var(--cell-blue);
+            box-shadow: 0 0 8px var(--cell-blue-glow), inset 0 0 4px rgba(255, 255, 255, 0.2);
         }
 
         .cell:hover {
-            outline: 1px solid rgba(255, 255, 255, 0.2);
+            outline: 1px solid rgba(255, 255, 255, 0.3);
         }
 
-        .cell.alive:hover {
-            outline: 1px solid var(--cell-alive);
+        .cell.red:hover, .cell.blue:hover {
+            outline: 1px solid rgba(255, 255, 255, 0.5);
         }
 
         /* Controls */
@@ -237,7 +260,6 @@
 
         .btn:hover {
             background: var(--grid-line);
-            border-color: var(--accent-cool);
             transform: translateY(-1px);
         }
 
@@ -246,31 +268,51 @@
         }
 
         .btn.primary {
-            background: linear-gradient(135deg, var(--cell-alive), #00cc6a);
-            border-color: var(--cell-alive);
-            color: #0a0a0f;
-            box-shadow: 0 0 20px var(--cell-glow);
+            background: linear-gradient(135deg, var(--cell-red), var(--cell-blue));
+            border-color: transparent;
+            color: white;
+            box-shadow: 0 0 20px rgba(255, 51, 102, 0.3), 0 0 20px rgba(51, 102, 255, 0.3);
         }
 
         .btn.primary:hover {
-            box-shadow: 0 0 30px var(--cell-glow);
+            box-shadow: 0 0 30px rgba(255, 51, 102, 0.5), 0 0 30px rgba(51, 102, 255, 0.5);
         }
 
-        .btn.danger {
-            border-color: var(--accent-hot);
-            color: var(--accent-hot);
+        .btn.red-team {
+            border-color: var(--cell-red);
+            color: var(--cell-red);
         }
 
-        .btn.danger:hover {
-            background: rgba(255, 0, 110, 0.1);
-            box-shadow: 0 0 20px rgba(255, 0, 110, 0.3);
+        .btn.red-team:hover {
+            background: rgba(255, 51, 102, 0.1);
+            box-shadow: 0 0 20px var(--cell-red-glow);
+        }
+
+        .btn.red-team.active {
+            background: var(--cell-red);
+            color: white;
+        }
+
+        .btn.blue-team {
+            border-color: var(--cell-blue);
+            color: var(--cell-blue);
+        }
+
+        .btn.blue-team:hover {
+            background: rgba(51, 102, 255, 0.1);
+            box-shadow: 0 0 20px var(--cell-blue-glow);
+        }
+
+        .btn.blue-team.active {
+            background: var(--cell-blue);
+            color: white;
         }
 
         .btn.active {
-            background: linear-gradient(135deg, var(--accent-hot), #cc0057);
-            border-color: var(--accent-hot);
+            background: linear-gradient(135deg, var(--accent-red), #cc0055);
+            border-color: var(--accent-red);
             color: white;
-            box-shadow: 0 0 20px rgba(255, 0, 110, 0.4);
+            box-shadow: 0 0 20px rgba(255, 51, 102, 0.4);
         }
 
         .btn svg {
@@ -298,22 +340,25 @@
             -webkit-appearance: none;
             width: 18px;
             height: 18px;
-            background: var(--accent-cool);
+            background: linear-gradient(135deg, var(--cell-red), var(--cell-blue));
             border-radius: 50%;
             cursor: pointer;
-            box-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
+            box-shadow: 0 0 10px rgba(255, 51, 102, 0.5);
             transition: all 0.2s;
         }
 
         .slider::-webkit-slider-thumb:hover {
             transform: scale(1.2);
-            box-shadow: 0 0 20px rgba(0, 212, 255, 0.8);
+            box-shadow: 0 0 20px rgba(255, 51, 102, 0.8);
         }
 
         .slider-value {
             min-width: 80px;
             font-size: 14px;
-            color: var(--accent-cool);
+            background: linear-gradient(90deg, var(--cell-red), var(--cell-blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
 
         /* Preset buttons */
@@ -330,14 +375,45 @@
         }
 
         .preset-btn:hover {
-            border-color: var(--accent-cool);
-            color: var(--accent-cool);
+            border-color: var(--text-primary);
+            color: var(--text-primary);
         }
 
         .preset-btn.active {
-            background: var(--accent-cool);
-            border-color: var(--accent-cool);
+            background: var(--text-primary);
+            border-color: var(--text-primary);
             color: var(--bg-deep);
+        }
+
+        /* Team selector */
+        .team-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            background: rgba(26, 26, 46, 0.5);
+            border-radius: 6px;
+        }
+
+        .team-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .team-dot.red {
+            background: var(--cell-red);
+            box-shadow: 0 0 10px var(--cell-red-glow);
+        }
+
+        .team-dot.blue {
+            background: var(--cell-blue);
+            box-shadow: 0 0 10px var(--cell-blue-glow);
+        }
+
+        .team-label {
+            font-size: 12px;
+            font-weight: 500;
         }
 
         /* Rules */
@@ -352,7 +428,10 @@
             font-size: 14px;
             font-weight: 600;
             margin-bottom: 12px;
-            color: var(--accent-cool);
+            background: linear-gradient(90deg, var(--cell-red), var(--cell-blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
 
         .rules-grid {
@@ -381,19 +460,19 @@
             font-weight: 700;
         }
 
-        .rule-icon.born {
-            background: rgba(0, 255, 136, 0.2);
-            color: var(--cell-alive);
+        .rule-icon.red {
+            background: rgba(255, 51, 102, 0.2);
+            color: var(--cell-red);
         }
 
-        .rule-icon.survive {
-            background: rgba(0, 212, 255, 0.2);
-            color: var(--accent-cool);
+        .rule-icon.blue {
+            background: rgba(51, 102, 255, 0.2);
+            color: var(--cell-blue);
         }
 
         .rule-icon.die {
-            background: rgba(255, 0, 110, 0.2);
-            color: var(--accent-hot);
+            background: rgba(255, 100, 100, 0.2);
+            color: #ff6464;
         }
 
         /* Loading */
@@ -415,8 +494,9 @@
         .loading-spinner {
             width: 60px;
             height: 60px;
-            border: 3px solid var(--grid-line);
-            border-top-color: var(--cell-alive);
+            border: 3px solid #1a1a2e;
+            border-top-color: #ff3366;
+            border-right-color: #3366ff;
             border-radius: 50%;
             animation: spin 1s linear infinite;
         }
@@ -437,11 +517,11 @@
             right: 24px;
             padding: 16px 24px;
             background: var(--bg-surface);
-            border: 1px solid var(--cell-alive);
+            border: 1px solid var(--cell-red);
             border-radius: 8px;
             color: var(--text-primary);
             font-size: 14px;
-            box-shadow: 0 0 30px var(--cell-glow);
+            box-shadow: 0 0 30px rgba(255, 51, 102, 0.3);
             transform: translateY(100px);
             opacity: 0;
             transition: all 0.3s var(--transition);
@@ -484,7 +564,7 @@
     <div id="root">
         <div class="loading">
             <div class="loading-spinner"></div>
-            <div class="loading-text">Initializing Life Engine...</div>
+            <div class="loading-text">初始化生命引擎...</div>
         </div>
     </div>
 
@@ -539,6 +619,7 @@
             const [gameState, setGameState] = useState(null);
             const [isPlaying, setIsPlaying] = useState(false);
             const [speed, setSpeed] = useState(10);
+            const [selectedTeam, setSelectedTeam] = useState(1); // 1 = red, 2 = blue
             const [gridSize, setGridSize] = useState({ width: 60, height: 40 });
             const [cellSize, setCellSize] = useState(12);
             const [isLoading, setIsLoading] = useState(true);
@@ -578,42 +659,30 @@
                     const data = await response.json();
                     setGameState(data);
                     setGridSize({ width, height });
-                    showToast(`Grid initialized: ${width}x${height}`);
+                    showToast(`网格已初始化: ${width}x${height}`);
                 } catch (err) {
                     setError(err.message);
                 }
             }, [showToast]);
 
+            // Set cell to specific team
+            const setCell = useCallback(async (x, y, team) => {
+                try {
+                    const endpoint = team === 1 ? 'set_red' : team === 2 ? 'set_blue' : 'set_dead';
+                    const response = await fetch(`${API_BASE}/api/${endpoint}/${x}/${y}`, {
+                        method: 'POST',
+                    });
+                    const data = await response.json();
+                    setGameState(data);
+                } catch (err) {
+                    setError(err.message);
+                }
+            }, []);
+
             // Toggle cell
             const toggleCell = useCallback(async (x, y) => {
                 try {
                     const response = await fetch(`${API_BASE}/api/toggle/${x}/${y}`, {
-                        method: 'POST',
-                    });
-                    const data = await response.json();
-                    setGameState(data);
-                } catch (err) {
-                    setError(err.message);
-                }
-            }, []);
-
-            // Set cell alive (for painting)
-            const setCellAlive = useCallback(async (x, y) => {
-                try {
-                    const response = await fetch(`${API_BASE}/api/set_alive/${x}/${y}`, {
-                        method: 'POST',
-                    });
-                    const data = await response.json();
-                    setGameState(data);
-                } catch (err) {
-                    setError(err.message);
-                }
-            }, []);
-
-            // Set cell dead (for erasing)
-            const setCellDead = useCallback(async (x, y) => {
-                try {
-                    const response = await fetch(`${API_BASE}/api/set_dead/${x}/${y}`, {
                         method: 'POST',
                     });
                     const data = await response.json();
@@ -646,7 +715,7 @@
                     });
                     const data = await response.json();
                     setGameState(data);
-                    showToast('Grid randomized');
+                    showToast('网格已随机化');
                 } catch (err) {
                     setError(err.message);
                 }
@@ -661,7 +730,7 @@
                     const data = await response.json();
                     setGameState(data);
                     setIsPlaying(false);
-                    showToast('Grid cleared');
+                    showToast('网格已清空');
                 } catch (err) {
                     setError(err.message);
                 }
@@ -711,6 +780,8 @@
                 setIsPlaying,
                 speed,
                 setSpeed,
+                selectedTeam,
+                setSelectedTeam,
                 gridSize,
                 cellSize,
                 isLoading,
@@ -720,80 +791,63 @@
                 step,
                 randomize,
                 clear,
-                toggleCell,
-                setCellAlive,
-                setCellDead,
+                setCell,
                 resize,
             };
         };
 
         // Grid Component
-        const GridCanvas = ({ cells, width, height, cellSize, onCellToggle, onCellPaint, onCellErase }) => {
-            const canvasRef = useRef(null);
+        const GridCanvas = ({ cells, width, height, cellSize, selectedTeam, onCellSet }) => {
             const isPaintingRef = useRef(false);
-            const isErasingRef = useRef(false);
+            const lastCellRef = useRef(null);
 
-            const getCellFromEvent = (e) => {
-                const rect = canvasRef.current.getBoundingClientRect();
-                const x = Math.floor((e.clientX - rect.left) / (cellSize + 1));
-                const y = Math.floor((e.clientY - rect.top) / (cellSize + 1));
-                return { x, y };
+            const handleCellClick = (x, y) => {
+                onCellSet(x, y, selectedTeam);
             };
 
             const handleMouseDown = (e, x, y) => {
-                e.preventDefault();
-                if (e.button === 2) {
-                    // Right click - erase
-                    isErasingRef.current = true;
-                    onCellErase(x, y);
-                } else {
-                    // Left click - paint
-                    isPaintingRef.current = true;
-                    onCellToggle(x, y);
-                }
+                isPaintingRef.current = true;
+                lastCellRef.current = `${x},${y}`;
+                onCellSet(x, y, selectedTeam);
             };
 
             const handleMouseEnter = (e, x, y) => {
-                if (isPaintingRef.current) {
-                    onCellPaint(x, y);
-                } else if (isErasingRef.current) {
-                    onCellErase(x, y);
+                if (isPaintingRef.current && lastCellRef.current !== `${x},${y}`) {
+                    lastCellRef.current = `${x},${y}`;
+                    onCellSet(x, y, selectedTeam);
                 }
             };
 
             const handleMouseUp = () => {
                 isPaintingRef.current = false;
-                isErasingRef.current = false;
-            };
-
-            const handleContextMenu = (e) => {
-                e.preventDefault();
+                lastCellRef.current = null;
             };
 
             useEffect(() => {
-                const handleGlobalMouseUp = () => {
-                    isPaintingRef.current = false;
-                    isErasingRef.current = false;
-                };
-                window.addEventListener('mouseup', handleGlobalMouseUp);
-                return () => window.removeEventListener('mouseup', handleGlobalMouseUp);
+                window.addEventListener('mouseup', handleMouseUp);
+                return () => window.removeEventListener('mouseup', handleMouseUp);
             }, []);
+
+            const getCellClass = (cell) => {
+                if (cell === 1) return 'red';
+                if (cell === 2) return 'blue';
+                return '';
+            };
 
             return (
                 <div
-                    ref={canvasRef}
                     className="grid-canvas"
                     style={{
                         gridTemplateColumns: `repeat(${width}, ${cellSize}px)`,
                         gridTemplateRows: `repeat(${height}, ${cellSize}px)`,
                     }}
-                    onContextMenu={handleContextMenu}
                 >
                     {cells && cells.map((row, y) =>
                         row.map((cell, x) => (
                             <div
                                 key={`${x}-${y}`}
-                                className={`cell ${cell ? 'alive' : ''}`}
+                                className={`cell ${getCellClass(cell)}`}
+                                onClick={() => handleCellClick(x, y)}
                                 onMouseDown={(e) => handleMouseDown(e, x, y)}
                                 onMouseEnter={(e) => handleMouseEnter(e, x, y)}
                             />
@@ -812,41 +866,63 @@
             onClear,
             speed,
             onSpeedChange,
+            selectedTeam,
+            onTeamSelect,
             currentPreset,
             onResize,
         }) => {
             return (
                 <div className="controls">
                     <div className="control-group">
-                        <span className="control-label">Simulation</span>
+                        <span className="control-label">模拟</span>
                         <div className="button-group">
                             <button className={`btn ${isPlaying ? 'active' : 'primary'}`} onClick={onTogglePlay}>
                                 {isPlaying ? <PauseIcon /> : <PlayIcon />}
-                                {isPlaying ? 'Pause' : 'Play'}
+                                {isPlaying ? '暂停' : '播放'}
                             </button>
                             <button className="btn" onClick={onStep}>
                                 <StepIcon />
-                                Step
+                                单步
                             </button>
                         </div>
                     </div>
 
                     <div className="control-group">
-                        <span className="control-label">Population</span>
+                        <span className="control-label">阵营选择</span>
+                        <div className="button-group">
+                            <button
+                                className={`btn red-team ${selectedTeam === 1 ? 'active' : ''}`}
+                                onClick={() => onTeamSelect(1)}
+                            >
+                                <span style={{ width: 10, height: 10, background: '#ff3366', borderRadius: '50%', display: 'inline-block' }}></span>
+                                我方 (红)
+                            </button>
+                            <button
+                                className={`btn blue-team ${selectedTeam === 2 ? 'active' : ''}`}
+                                onClick={() => onTeamSelect(2)}
+                            >
+                                <span style={{ width: 10, height: 10, background: '#3366ff', borderRadius: '50%', display: 'inline-block' }}></span>
+                                敌方 (蓝)
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="control-group">
+                        <span className="control-label">种群</span>
                         <div className="button-group">
                             <button className="btn" onClick={() => onRandomize(0.3)}>
                                 <RefreshIcon />
-                                Random
+                                随机
                             </button>
-                            <button className="btn danger" onClick={onClear}>
+                            <button className="btn" onClick={onClear}>
                                 <TrashIcon />
-                                Clear
+                                清空
                             </button>
                         </div>
                     </div>
 
                     <div className="control-group">
-                        <span className="control-label">Speed</span>
+                        <span className="control-label">速度</span>
                         <div className="slider-container">
                             <input
                                 type="range"
@@ -856,30 +932,30 @@
                                 value={speed}
                                 onChange={(e) => onSpeedChange(Number(e.target.value))}
                             />
-                            <span className="slider-value">{speed} gen/s</span>
+                            <span className="slider-value">{speed} 代/秒</span>
                         </div>
                     </div>
 
                     <div className="control-group">
-                        <span className="control-label">Grid Size</span>
+                        <span className="control-label">网格大小</span>
                         <div className="button-group">
                             <button
                                 className={`preset-btn ${currentPreset === 'small' ? 'active' : ''}`}
                                 onClick={() => onResize('small')}
                             >
-                                Small
+                                小
                             </button>
                             <button
                                 className={`preset-btn ${currentPreset === 'medium' ? 'active' : ''}`}
                                 onClick={() => onResize('medium')}
                             >
-                                Medium
+                                中
                             </button>
                             <button
                                 className={`preset-btn ${currentPreset === 'large' ? 'active' : ''}`}
                                 onClick={() => onResize('large')}
                             >
-                                Large
+                                大
                             </button>
                         </div>
                     </div>
@@ -890,23 +966,23 @@
         // Rules Component
         const Rules = () => (
             <div className="rules">
-                <h3>Conway's Rules</h3>
+                <h3>游戏规则</h3>
                 <div className="rules-grid">
                     <div className="rule">
                         <div className="rule-icon die">1</div>
-                        <span>Loneliness: Live cells with fewer than 2 neighbors die</span>
+                        <span>孤独死亡：活细胞邻居少于 2 个时死亡</span>
                     </div>
                     <div className="rule">
-                        <div className="rule-icon survive">2</div>
-                        <span>Stability: Live cells with 2-3 neighbors survive</span>
+                        <div className="rule-icon die">2</div>
+                        <span>过度拥挤：活细胞邻居超过 3 个时死亡</span>
                     </div>
                     <div className="rule">
-                        <div className="rule-icon die">3</div>
-                        <span>Overcrowding: Live cells with more than 3 neighbors die</span>
+                        <div className="rule-icon red">3</div>
+                        <span>生存：2-3 个邻居时存活</span>
                     </div>
                     <div className="rule">
-                        <div className="rule-icon born">4</div>
-                        <span>Birth: Dead cells with exactly 3 neighbors become alive</span>
+                        <div className="rule-icon blue">4</div>
+                        <span>繁殖：死细胞恰好 3 个邻居时复活，多数阵营决定颜色</span>
                     </div>
                 </div>
             </div>
@@ -927,24 +1003,24 @@
                         width: '80px',
                         height: '80px',
                         margin: '0 auto 24px',
-                        background: 'rgba(255, 0, 110, 0.2)',
+                        background: 'rgba(255, 51, 102, 0.2)',
                         borderRadius: '50%',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center'
                     }}>
-                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#ff006e" strokeWidth="2">
+                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#ff3366" strokeWidth="2">
                             <circle cx="12" cy="12" r="10"></circle>
                             <line x1="12" y1="8" x2="12" y2="12"></line>
                             <line x1="12" y1="16" x2="12.01" y2="16"></line>
                         </svg>
                     </div>
-                    <h2 style={{ marginBottom: '12px', color: '#ff006e' }}>Connection Failed</h2>
+                    <h2 style={{ marginBottom: '12px', color: '#ff3366' }}>连接失败</h2>
                     <p style={{ color: '#666680', marginBottom: '24px' }}>
-                        Unable to connect to the Game of Life server.
+                        无法连接到生命游戏服务器。
                     </p>
                     <p style={{ color: '#666680', fontSize: '14px' }}>
-                        Please ensure the Rust backend is running:<br />
+                        请确保 Rust 后端正在运行:<br />
                         <code style={{
                             background: '#1a1a2e',
                             padding: '4px 8px',
@@ -955,7 +1031,7 @@
                         </code>
                     </p>
                     <p style={{ color: '#666680', fontSize: '12px', marginTop: '8px' }}>
-                        Error: {message}
+                        错误: {message}
                     </p>
                 </div>
             </div>
@@ -968,6 +1044,8 @@
                 isPlaying,
                 speed,
                 setSpeed,
+                selectedTeam,
+                setSelectedTeam,
                 gridSize,
                 cellSize,
                 isLoading,
@@ -977,9 +1055,7 @@
                 step,
                 randomize,
                 clear,
-                toggleCell,
-                setCellAlive,
-                setCellDead,
+                setCell,
                 resize,
             } = useGameState();
 
@@ -987,7 +1063,7 @@
                 return (
                     <div className="loading">
                         <div className="loading-spinner"></div>
-                        <div className="loading-text">Initializing Life Engine...</div>
+                        <div className="loading-text">初始化生命引擎...</div>
                     </div>
                 );
             }
@@ -1006,31 +1082,29 @@
                         <div className="logo">
                             <div className="logo-icon">
                                 <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#0a0a0f" strokeWidth="2.5">
-                                    <rect x="3" y="3" width="7" height="7"></rect>
-                                    <rect x="14" y="3" width="7" height="7"></rect>
-                                    <rect x="14" y="14" width="7" height="7"></rect>
-                                    <rect x="3" y="14" width="7" height="7"></rect>
+                                    <circle cx="8" cy="8" r="4" fill="#ff3366" stroke="#ff3366"></circle>
+                                    <circle cx="16" cy="8" r="4" fill="#3366ff" stroke="#3366ff"></circle>
+                                    <circle cx="8" cy="16" r="4" fill="#3366ff" stroke="#3366ff"></circle>
+                                    <circle cx="16" cy="16" r="4" fill="#ff3366" stroke="#ff3366"></circle>
                                 </svg>
                             </div>
                             <div className="logo-text">
-                                <h1>Conway's Game of Life</h1>
-                                <p>Cellular Automaton Simulator</p>
+                                <h1>两阵营生命游戏</h1>
+                                <p>红色 vs 蓝色 · 多数原则繁殖</p>
                             </div>
                         </div>
                         <div className="stats">
-                            <div className="stat">
+                            <div className="stat generation">
                                 <div className="stat-value">{gameState?.generation || 0}</div>
-                                <div className="stat-label">Generation</div>
+                                <div className="stat-label">代数</div>
                             </div>
-                            <div className="stat">
-                                <div className="stat-value">{gameState?.population || 0}</div>
-                                <div className="stat-label">Population</div>
+                            <div className="stat red">
+                                <div className="stat-value">{gameState?.red_count || 0}</div>
+                                <div className="stat-label">我方 (红)</div>
                             </div>
-                            <div className="stat">
-                                <div className="stat-value" style={{ fontSize: '20px' }}>
-                                    {totalCells > 0 ? ((gameState?.population || 0) / totalCells * 100).toFixed(1) : 0}%
-                                </div>
-                                <div className="stat-label">Density</div>
+                            <div className="stat blue">
+                                <div className="stat-value">{gameState?.blue_count || 0}</div>
+                                <div className="stat-label">敌方 (蓝)</div>
                             </div>
                         </div>
                     </header>
@@ -1042,9 +1116,8 @@
                             width={gridSize.width}
                             height={gridSize.height}
                             cellSize={cellSize}
-                            onCellToggle={toggleCell}
-                            onCellPaint={setCellAlive}
-                            onCellErase={setCellDead}
+                            selectedTeam={selectedTeam}
+                            onCellSet={setCell}
                         />
                     </div>
 
@@ -1057,6 +1130,8 @@
                         onClear={clear}
                         speed={speed}
                         onSpeedChange={setSpeed}
+                        selectedTeam={selectedTeam}
+                        onTeamSelect={setSelectedTeam}
                         currentPreset={currentPreset}
                         onResize={resize}
                     />

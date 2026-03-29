@@ -1,4 +1,4 @@
-//! Conway's Game of Life - HTTP API Handlers
+//! Two-Faction Game of Life - HTTP API Handlers
 //!
 //! Provides REST API endpoints for game manipulation
 
@@ -34,9 +34,11 @@ pub struct RandomizeRequest {
 pub struct GameStateResponse {
     pub width: usize,
     pub height: usize,
-    pub cells: Vec<Vec<bool>>,
+    pub cells: Vec<Vec<u8>>,
     pub generation: u64,
     pub population: usize,
+    pub red_count: usize,
+    pub blue_count: usize,
 }
 
 impl From<&GameState> for GameStateResponse {
@@ -47,6 +49,8 @@ impl From<&GameState> for GameStateResponse {
             cells: state.cells.clone(),
             generation: state.generation,
             population: state.population,
+            red_count: state.red_count,
+            blue_count: state.blue_count,
         }
     }
 }
@@ -67,7 +71,7 @@ pub async fn init_grid(
     Json(GameStateResponse::from(&*game))
 }
 
-/// POST /api/toggle/:x/:y - Toggle a specific cell
+/// POST /api/toggle/:x/:y - Toggle cell state (cycles: dead -> red -> blue -> dead)
 pub async fn toggle_cell(
     State(state): State<AppState>,
     Path((x, y)): Path<(usize, usize)>,
@@ -77,17 +81,27 @@ pub async fn toggle_cell(
     Json(GameStateResponse::from(&*game))
 }
 
-/// POST /api/set_alive/:x/:y - Set cell to alive (for painting)
-pub async fn set_cell_alive(
+/// POST /api/set_red/:x/:y - Set cell to red (team 1)
+pub async fn set_cell_red(
     State(state): State<AppState>,
     Path((x, y)): Path<(usize, usize)>,
 ) -> Json<GameStateResponse> {
     let mut game = state.lock().await;
-    game.set_cell_alive(x, y);
+    game.set_cell_red(x, y);
     Json(GameStateResponse::from(&*game))
 }
 
-/// POST /api/set_dead/:x/:y - Set cell to dead (for erasing)
+/// POST /api/set_blue/:x/:y - Set cell to blue (team 2)
+pub async fn set_cell_blue(
+    State(state): State<AppState>,
+    Path((x, y)): Path<(usize, usize)>,
+) -> Json<GameStateResponse> {
+    let mut game = state.lock().await;
+    game.set_cell_blue(x, y);
+    Json(GameStateResponse::from(&*game))
+}
+
+/// POST /api/set_dead/:x/:y - Set cell to dead
 pub async fn set_cell_dead(
     State(state): State<AppState>,
     Path((x, y)): Path<(usize, usize)>,
@@ -127,7 +141,8 @@ pub fn create_router(state: AppState) -> Router {
         .route("/api/state", get(get_state))
         .route("/api/init", post(init_grid))
         .route("/api/toggle/:x/:y", post(toggle_cell))
-        .route("/api/set_alive/:x/:y", post(set_cell_alive))
+        .route("/api/set_red/:x/:y", post(set_cell_red))
+        .route("/api/set_blue/:x/:y", post(set_cell_blue))
         .route("/api/set_dead/:x/:y", post(set_cell_dead))
         .route("/api/step", post(step))
         .route("/api/randomize", post(randomize))
