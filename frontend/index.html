@@ -23,603 +23,135 @@
             --text-muted: #666680;
             --transition: cubic-bezier(0.4, 0, 0.2, 1);
         }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'JetBrains Mono', monospace;
-            background: var(--bg-deep);
-            color: var(--text-primary);
-            min-height: 100vh;
-            overflow-x: hidden;
-        }
-
-        /* Scanline overlay effect */
-        body::before {
-            content: '';
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: repeating-linear-gradient(
-                0deg,
-                transparent,
-                transparent 2px,
-                rgba(0, 0, 0, 0.03) 2px,
-                rgba(0, 0, 0, 0.03) 4px
-            );
-            pointer-events: none;
-            z-index: 1000;
-        }
-
-        .app {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 24px;
-            display: flex;
-            flex-direction: column;
-            gap: 24px;
-        }
-
-        /* Header */
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 16px 24px;
-            background: linear-gradient(135deg, rgba(26, 26, 46, 0.8), rgba(18, 18, 26, 0.9));
-            border: 1px solid var(--grid-line);
-            border-radius: 12px;
-            backdrop-filter: blur(10px);
-        }
-
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-        }
-
-        .logo-icon {
-            width: 48px;
-            height: 48px;
-            background: linear-gradient(135deg, var(--cell-red), var(--cell-blue));
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 0 20px rgba(255, 51, 102, 0.3);
-            animation: pulse 2s ease-in-out infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { box-shadow: 0 0 20px rgba(255, 51, 102, 0.3), 0 0 20px rgba(51, 102, 255, 0.3); }
-            50% { box-shadow: 0 0 40px rgba(255, 51, 102, 0.5), 0 0 40px rgba(51, 102, 255, 0.5); }
-        }
-
-        .logo-text h1 {
-            font-size: 24px;
-            font-weight: 700;
-            letter-spacing: -0.02em;
-            background: linear-gradient(90deg, var(--cell-red), var(--cell-blue));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .logo-text p {
-            font-size: 12px;
-            color: var(--text-muted);
-            margin-top: 2px;
-        }
-
-        .stats {
-            display: flex;
-            gap: 24px;
-            align-items: center;
-        }
-
-        .stat {
-            text-align: center;
-            padding: 8px 16px;
-            border-radius: 8px;
-            background: rgba(26, 26, 46, 0.5);
-        }
-
-        .stat-value {
-            font-size: 28px;
-            font-weight: 700;
-        }
-
-        .stat-label {
-            font-size: 11px;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-            margin-top: 4px;
-        }
-
-        .stat.red .stat-value {
-            color: var(--cell-red);
-            text-shadow: 0 0 20px var(--cell-red-glow);
-        }
-
-        .stat.blue .stat-value {
-            color: var(--cell-blue);
-            text-shadow: 0 0 20px var(--cell-blue-glow);
-        }
-
-        .stat.generation .stat-value {
-            color: var(--text-primary);
-        }
-
-        /* Grid Container */
-        .grid-container {
-            position: relative;
-            background: var(--bg-surface);
-            border: 1px solid var(--grid-line);
-            border-radius: 12px;
-            padding: 16px;
-            overflow: hidden;
-        }
-
-        .grid-container::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 200px;
-            background: radial-gradient(ellipse at center top, rgba(255, 51, 102, 0.03), rgba(51, 102, 255, 0.03), transparent);
-            pointer-events: none;
-        }
-
-        .grid-canvas {
-            display: grid;
-            gap: 1px;
-            background: var(--grid-line);
-            border-radius: 4px;
-            overflow: hidden;
-            cursor: crosshair;
-            user-select: none;
-        }
-
-        .cell {
-            background: var(--cell-dead);
-            aspect-ratio: 1;
-            transition: all 0.15s var(--transition);
-        }
-
-        .cell.red {
-            background: var(--cell-red);
-            box-shadow: 0 0 8px var(--cell-red-glow), inset 0 0 4px rgba(255, 255, 255, 0.2);
-        }
-
-        .cell.blue {
-            background: var(--cell-blue);
-            box-shadow: 0 0 8px var(--cell-blue-glow), inset 0 0 4px rgba(255, 255, 255, 0.2);
-        }
-
-        .cell:hover {
-            outline: 1px solid rgba(255, 255, 255, 0.3);
-        }
-
-        .cell.red:hover, .cell.blue:hover {
-            outline: 1px solid rgba(255, 255, 255, 0.5);
-        }
-
-        /* Controls */
-        .controls {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 16px;
-            padding: 20px;
-            background: linear-gradient(135deg, rgba(26, 26, 46, 0.8), rgba(18, 18, 26, 0.9));
-            border: 1px solid var(--grid-line);
-            border-radius: 12px;
-        }
-
-        .control-group {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .control-label {
-            font-size: 11px;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-        }
-
-        .button-group {
-            display: flex;
-            gap: 8px;
-        }
-
-        .btn {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            padding: 12px 20px;
-            border: 1px solid var(--grid-line);
-            border-radius: 8px;
-            background: var(--bg-surface);
-            color: var(--text-primary);
-            font-family: inherit;
-            font-size: 14px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s var(--transition);
-        }
-
-        .btn:hover {
-            background: var(--grid-line);
-            transform: translateY(-1px);
-        }
-
-        .btn:active {
-            transform: scale(0.98);
-        }
-
-        .btn.primary {
-            background: linear-gradient(135deg, var(--cell-red), var(--cell-blue));
-            border-color: transparent;
-            color: white;
-            box-shadow: 0 0 20px rgba(255, 51, 102, 0.3), 0 0 20px rgba(51, 102, 255, 0.3);
-        }
-
-        .btn.primary:hover {
-            box-shadow: 0 0 30px rgba(255, 51, 102, 0.5), 0 0 30px rgba(51, 102, 255, 0.5);
-        }
-
-        .btn.red-team {
-            border-color: var(--cell-red);
-            color: var(--cell-red);
-        }
-
-        .btn.red-team:hover {
-            background: rgba(255, 51, 102, 0.1);
-            box-shadow: 0 0 20px var(--cell-red-glow);
-        }
-
-        .btn.red-team.active {
-            background: var(--cell-red);
-            color: white;
-        }
-
-        .btn.blue-team {
-            border-color: var(--cell-blue);
-            color: var(--cell-blue);
-        }
-
-        .btn.blue-team:hover {
-            background: rgba(51, 102, 255, 0.1);
-            box-shadow: 0 0 20px var(--cell-blue-glow);
-        }
-
-        .btn.blue-team.active {
-            background: var(--cell-blue);
-            color: white;
-        }
-
-        .btn.active {
-            background: linear-gradient(135deg, var(--accent-red), #cc0055);
-            border-color: var(--accent-red);
-            color: white;
-            box-shadow: 0 0 20px rgba(255, 51, 102, 0.4);
-        }
-
-        .btn svg {
-            width: 18px;
-            height: 18px;
-        }
-
-        /* Slider */
-        .slider-container {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .slider {
-            -webkit-appearance: none;
-            width: 150px;
-            height: 6px;
-            background: var(--grid-line);
-            border-radius: 3px;
-            outline: none;
-        }
-
-        .slider::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            width: 18px;
-            height: 18px;
-            background: linear-gradient(135deg, var(--cell-red), var(--cell-blue));
-            border-radius: 50%;
-            cursor: pointer;
-            box-shadow: 0 0 10px rgba(255, 51, 102, 0.5);
-            transition: all 0.2s;
-        }
-
-        .slider::-webkit-slider-thumb:hover {
-            transform: scale(1.2);
-            box-shadow: 0 0 20px rgba(255, 51, 102, 0.8);
-        }
-
-        .slider-value {
-            min-width: 80px;
-            font-size: 14px;
-            background: linear-gradient(90deg, var(--cell-red), var(--cell-blue));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        /* Preset buttons */
-        .preset-btn {
-            padding: 8px 16px;
-            border: 1px solid var(--grid-line);
-            border-radius: 6px;
-            background: transparent;
-            color: var(--text-muted);
-            font-family: inherit;
-            font-size: 12px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .preset-btn:hover {
-            border-color: var(--text-primary);
-            color: var(--text-primary);
-        }
-
-        .preset-btn.active {
-            background: var(--text-primary);
-            border-color: var(--text-primary);
-            color: var(--bg-deep);
-        }
-
-        /* Team selector */
-        .team-indicator {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 8px 12px;
-            background: rgba(26, 26, 46, 0.5);
-            border-radius: 6px;
-        }
-
-        .team-dot {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-        }
-
-        .team-dot.red {
-            background: var(--cell-red);
-            box-shadow: 0 0 10px var(--cell-red-glow);
-        }
-
-        .team-dot.blue {
-            background: var(--cell-blue);
-            box-shadow: 0 0 10px var(--cell-blue-glow);
-        }
-
-        .team-label {
-            font-size: 12px;
-            font-weight: 500;
-        }
-
-        /* Rules */
-        .rules {
-            padding: 20px 24px;
-            background: linear-gradient(135deg, rgba(26, 26, 46, 0.6), rgba(18, 18, 26, 0.8));
-            border: 1px solid var(--grid-line);
-            border-radius: 12px;
-        }
-
-        .rules h3 {
-            font-size: 14px;
-            font-weight: 600;
-            margin-bottom: 12px;
-            background: linear-gradient(90deg, var(--cell-red), var(--cell-blue));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .rules-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 12px;
-        }
-
-        .rule {
-            display: flex;
-            align-items: flex-start;
-            gap: 10px;
-            font-size: 12px;
-            color: var(--text-muted);
-        }
-
-        .rule-icon {
-            flex-shrink: 0;
-            width: 24px;
-            height: 24px;
-            border-radius: 4px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 10px;
-            font-weight: 700;
-        }
-
-        .rule-icon.red {
-            background: rgba(255, 51, 102, 0.2);
-            color: var(--cell-red);
-        }
-
-        .rule-icon.blue {
-            background: rgba(51, 102, 255, 0.2);
-            color: var(--cell-blue);
-        }
-
-        .rule-icon.die {
-            background: rgba(255, 100, 100, 0.2);
-            color: #ff6464;
-        }
-
-        /* Loading */
-        .loading {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: #0a0a0f;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 20px;
-            z-index: 10000;
-        }
-
-        .loading-spinner {
-            width: 60px;
-            height: 60px;
-            border: 3px solid #1a1a2e;
-            border-top-color: #ff3366;
-            border-right-color: #3366ff;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        .loading-text {
-            color: #888899;
-            font-size: 14px;
-        }
-
-        /* Toast */
-        .toast {
-            position: fixed;
-            bottom: 24px;
-            right: 24px;
-            padding: 16px 24px;
-            background: var(--bg-surface);
-            border: 1px solid var(--cell-red);
-            border-radius: 8px;
-            color: var(--text-primary);
-            font-size: 14px;
-            box-shadow: 0 0 30px rgba(255, 51, 102, 0.3);
-            transform: translateY(100px);
-            opacity: 0;
-            transition: all 0.3s var(--transition);
-            z-index: 100;
-        }
-
-        .toast.show {
-            transform: translateY(0);
-            opacity: 1;
-        }
-
-        /* Responsive */
-        @media (max-width: 768px) {
-            .header {
-                flex-direction: column;
-                gap: 20px;
-            }
-
-            .stats {
-                width: 100%;
-                justify-content: space-around;
-            }
-
-            .controls {
-                flex-direction: column;
-            }
-
-            .button-group {
-                flex-wrap: wrap;
-            }
-
-            .btn {
-                flex: 1;
-                min-width: 100px;
-            }
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'JetBrains Mono', monospace; background: var(--bg-deep); color: var(--text-primary); min-height: 100vh; }
+        .app { max-width: 1400px; margin: 0 auto; padding: 24px; display: flex; flex-direction: column; gap: 24px; }
+        .header { display: flex; justify-content: space-between; align-items: center; padding: 16px 24px; background: linear-gradient(135deg, rgba(26, 26, 46, 0.8), rgba(18, 18, 26, 0.9)); border: 1px solid var(--grid-line); border-radius: 12px; }
+        .logo { display: flex; align-items: center; gap: 16px; }
+        .logo-icon { width: 48px; height: 48px; background: linear-gradient(135deg, var(--cell-red), var(--cell-blue)); border-radius: 8px; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 20px rgba(255, 51, 102, 0.3); animation: pulse 2s ease-in-out infinite; }
+        @keyframes pulse { 0%, 100% { box-shadow: 0 0 20px rgba(255, 51, 102, 0.3), 0 0 20px rgba(51, 102, 255, 0.3); } 50% { box-shadow: 0 0 40px rgba(255, 51, 102, 0.5), 0 0 40px rgba(51, 102, 255, 0.5); } }
+        .logo-text h1 { font-size: 24px; font-weight: 700; background: linear-gradient(90deg, var(--cell-red), var(--cell-blue)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .logo-text p { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+        .stats { display: flex; gap: 24px; }
+        .stat { text-align: center; padding: 8px 16px; border-radius: 8px; background: rgba(26, 26, 46, 0.5); }
+        .stat-value { font-size: 28px; font-weight: 700; }
+        .stat-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.1em; margin-top: 4px; }
+        .grid-container { background: var(--bg-surface); border: 1px solid var(--grid-line); border-radius: 12px; padding: 16px; overflow: auto; }
+        .grid-canvas { display: grid; gap: 1px; background: var(--grid-line); border-radius: 4px; cursor: crosshair; }
+        .cell { background: var(--cell-dead); aspect-ratio: 1; transition: all 0.15s; }
+        .cell.red { background: var(--cell-red); box-shadow: 0 0 8px var(--cell-red-glow); }
+        .cell.blue { background: var(--cell-blue); box-shadow: 0 0 8px var(--cell-blue-glow); }
+        .controls { display: flex; flex-wrap: wrap; gap: 16px; padding: 20px; background: linear-gradient(135deg, rgba(26, 26, 46, 0.8), rgba(18, 18, 26, 0.9)); border: 1px solid var(--grid-line); border-radius: 12px; }
+        .control-group { display: flex; flex-direction: column; gap: 8px; }
+        .control-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.1em; }
+        .button-group { display: flex; gap: 8px; flex-wrap: wrap; }
+        .btn { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 16px; border: 1px solid var(--grid-line); border-radius: 8px; background: var(--bg-surface); color: var(--text-primary); font-family: inherit; font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.2s; }
+        .btn:hover { background: var(--grid-line); transform: translateY(-1px); }
+        .btn.primary { background: linear-gradient(135deg, var(--cell-red), var(--cell-blue)); border-color: transparent; color: white; }
+        .btn.red-team { border-color: var(--cell-red); color: var(--cell-red); }
+        .btn.red-team.active, .btn.red-team:hover { background: var(--cell-red); color: white; }
+        .btn.blue-team { border-color: var(--cell-blue); color: var(--cell-blue); }
+        .btn.blue-team.active, .btn.blue-team:hover { background: var(--cell-blue); color: white; }
+        .btn.active { background: linear-gradient(135deg, var(--accent-red), #cc0055); border-color: var(--accent-red); color: white; }
+        .btn svg { width: 16px; height: 16px; }
+        .slider-container { display: flex; align-items: center; gap: 12px; }
+        .slider { -webkit-appearance: none; width: 120px; height: 6px; background: var(--grid-line); border-radius: 3px; }
+        .slider::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; background: linear-gradient(135deg, var(--cell-red), var(--cell-blue)); border-radius: 50%; cursor: pointer; }
+        .slider-value { font-size: 13px; background: linear-gradient(90deg, var(--cell-red), var(--cell-blue)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .preset-btn { padding: 6px 12px; border: 1px solid var(--grid-line); border-radius: 6px; background: transparent; color: var(--text-muted); font-family: inherit; font-size: 11px; cursor: pointer; transition: all 0.2s; }
+        .preset-btn:hover, .preset-btn.active { border-color: var(--text-primary); color: var(--text-primary); background: var(--text-primary); color: var(--bg-deep); }
+        .patterns-section { display: flex; flex-direction: column; gap: 12px; }
+        .patterns-container { display: flex; gap: 8px; flex-wrap: wrap; }
+        .pattern-btn { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 12px; border: 1px solid var(--grid-line); border-radius: 8px; background: transparent; color: var(--text-muted); font-family: inherit; font-size: 11px; cursor: pointer; transition: all 0.2s; min-width: 70px; }
+        .pattern-btn:hover { border-color: var(--text-primary); color: var(--text-primary); }
+        .pattern-btn.active { background: linear-gradient(135deg, rgba(255, 51, 102, 0.2), rgba(51, 102, 255, 0.2)); border-color: var(--cell-red); color: var(--text-primary); }
+        .pattern-preview { width: 32px; height: 32px; display: grid; gap: 1px; }
+        .pattern-preview.rotated-90 { transform: rotate(90deg); }
+        .pattern-preview.rotated-180 { transform: rotate(180deg); }
+        .pattern-preview.rotated-270 { transform: rotate(270deg); }
+        .pattern-cell { background: transparent; }
+        .pattern-cell.alive { background: linear-gradient(135deg, var(--cell-red), var(--cell-blue)); border-radius: 1px; }
+        .rotate-group { display: flex; gap: 4px; align-items: center; }
+        .rotate-btn { width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center; border: 1px solid var(--grid-line); border-radius: 6px; background: transparent; color: var(--text-muted); cursor: pointer; transition: all 0.2s; font-size: 16px; }
+        .rotate-btn:hover { border-color: var(--text-primary); color: var(--text-primary); }
+        .rotate-btn.active { border-color: var(--cell-red); color: var(--cell-red); background: rgba(255, 51, 102, 0.1); }
+        .rules { padding: 20px 24px; background: linear-gradient(135deg, rgba(26, 26, 46, 0.6), rgba(18, 18, 26, 0.8)); border: 1px solid var(--grid-line); border-radius: 12px; }
+        .rules h3 { font-size: 14px; font-weight: 600; margin-bottom: 12px; background: linear-gradient(90deg, var(--cell-red), var(--cell-blue)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .rules-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+        .rule { display: flex; align-items: flex-start; gap: 10px; font-size: 12px; color: var(--text-muted); }
+        .rule-icon { flex-shrink: 0; width: 24px; height: 24px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; }
+        .rule-icon.red { background: rgba(255, 51, 102, 0.2); color: var(--cell-red); }
+        .rule-icon.blue { background: rgba(51, 102, 255, 0.2); color: var(--cell-blue); }
+        .rule-icon.die { background: rgba(255, 100, 100, 0.2); color: #ff6464; }
+        .loading { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0a0a0f; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; z-index: 10000; }
+        .loading-spinner { width: 60px; height: 60px; border: 3px solid #1a1a2e; border-top-color: #ff3366; border-right-color: #3366ff; border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .loading-text { color: #888899; font-size: 14px; }
+        .toast { position: fixed; bottom: 24px; right: 24px; padding: 16px 24px; background: var(--bg-surface); border: 1px solid var(--cell-red); border-radius: 8px; color: var(--text-primary); font-size: 14px; box-shadow: 0 0 30px rgba(255, 51, 102, 0.3); transform: translateY(100px); opacity: 0; transition: all 0.3s; z-index: 100; }
+        .toast.show { transform: translateY(0); opacity: 1; }
+        @media (max-width: 768px) { .header { flex-direction: column; gap: 20px; } .stats { width: 100%; justify-content: space-around; } .controls { flex-direction: column; } }
     </style>
 </head>
 <body>
-    <div id="root">
-        <div class="loading">
-            <div class="loading-spinner"></div>
-            <div class="loading-text">初始化生命引擎...</div>
-        </div>
-    </div>
-
+    <div id="root"><div class="loading"><div class="loading-spinner"></div><div class="loading-text">初始化生命引擎...</div></div></div>
     <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-
     <script type="text/babel">
         const { useState, useEffect, useCallback, useRef } = React;
-
-        // API Configuration
         const API_BASE = 'http://localhost:8080';
+        const PlayIcon = () => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>);
+        const PauseIcon = () => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>);
+        const StepIcon = () => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="5 4 15 12 5 20 5 4"></polygon><line x1="19" y1="5" x2="19" y2="19"></line></svg>);
+        const RefreshIcon = () => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>);
+        const TrashIcon = () => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>);
+        const RotateIcon = () => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 12a9 9 0 1 1-9-9"></path><polyline points="21 3 21 9 15 9"></polyline></svg>);
 
-        // Icons as SVG components
-        const PlayIcon = () => (
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <polygon points="5 3 19 12 5 21 5 3"></polygon>
-            </svg>
-        );
+        const PATTERNS = {
+            block: { name: '方块', cells: [[0,0],[0,1],[1,0],[1,1]], size: 2 },
+            blinker: { name: '闪烁者', cells: [[0,1],[1,1],[2,1]], size: 3 },
+            glider: { name: '滑翔机', cells: [[0,1],[1,2],[2,0],[2,1],[2,2]], size: 3 },
+            lwss: { name: 'LWSS', cells: [[1,0],[4,0],[0,1],[0,2],[4,2],[0,3],[1,3],[2,3],[3,3]], size: 5 },
+            toad: { name: '蟾蜍', cells: [[1,0],[2,0],[3,0],[0,1],[1,1],[2,1]], size: 4 },
+            beacon: { name: '信标', cells: [[0,0],[1,0],[0,1],[3,2],[3,3],[2,3]], size: 4 },
+            diehard: { name: '死硬', cells: [[1,0],[1,1],[0,2],[2,2],[6,2],[7,2],[8,2]], size: 9 },
+            acorn: { name: '橡果', cells: [[1,0],[3,1],[0,2],[1,2],[4,2],[5,2],[6,2]], size: 7 },
+        };
 
-        const PauseIcon = () => (
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="6" y="4" width="4" height="16"></rect>
-                <rect x="14" y="4" width="4" height="16"></rect>
-            </svg>
-        );
+        // 旋转函数 (x, y) -> (y, -x) for 90deg CW
+        const rotateCells = (cells, rotation) => {
+            if (rotation === 0) return cells;
+            const rotated = cells.map(([x, y]) => {
+                switch (rotation) {
+                    case 90: return [y, -x];
+                    case 180: return [-x, -y];
+                    case 270: return [-y, x];
+                    default: return [x, y];
+                }
+            });
+            // 归一化到原点
+            const minX = Math.min(...rotated.map(c => c[0]));
+            const minY = Math.min(...rotated.map(c => c[1]));
+            return rotated.map(([x, y]) => [x - minX, y - minY]);
+        };
 
-        const StepIcon = () => (
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <polygon points="5 4 15 12 5 20 5 4"></polygon>
-                <line x1="19" y1="5" x2="19" y2="19"></line>
-            </svg>
-        );
+        const PatternPreview = ({ pattern, rotation = 0 }) => {
+            const rotatedCells = rotateCells(pattern.cells, rotation);
+            const cellSet = new Set(rotatedCells.map(([x, y]) => `${x},${y}`));
+            const cellSize = Math.floor(32 / (pattern.size + 1));
+            const cls = rotation === 90 ? 'rotated-90' : rotation === 180 ? 'rotated-180' : rotation === 270 ? 'rotated-270' : '';
+            return (<div className={`pattern-preview ${cls}`} style={{ gridTemplateColumns: `repeat(${pattern.size}, ${cellSize}px)`, gridTemplateRows: `repeat(${pattern.size}, ${cellSize}px)` }}>
+                {Array.from({ length: pattern.size }, (_, y) => Array.from({ length: pattern.size }, (_, x) => (<div key={`${x}-${y}`} className={`pattern-cell ${cellSet.has(`${x},${y}`) ? 'alive' : ''}`} style={{ width: cellSize, height: cellSize }} />)))}
+            </div>);
+        };
 
-        const RefreshIcon = () => (
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="23 4 23 10 17 10"></polyline>
-                <polyline points="1 20 1 14 7 14"></polyline>
-                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
-            </svg>
-        );
-
-        const TrashIcon = () => (
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="3 6 5 6 21 6"></polyline>
-                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-            </svg>
-        );
-
-        // Game Hook
         const useGameState = () => {
             const [gameState, setGameState] = useState(null);
             const [isPlaying, setIsPlaying] = useState(false);
             const [speed, setSpeed] = useState(10);
-            const [selectedTeam, setSelectedTeam] = useState(1); // 1 = red, 2 = blue
+            const [selectedTeam, setSelectedTeam] = useState(1);
+            const [selectedPattern, setSelectedPattern] = useState(null);
+            const [patternRotation, setPatternRotation] = useState(0);
             const [gridSize, setGridSize] = useState({ width: 60, height: 40 });
             const [cellSize, setCellSize] = useState(12);
             const [isLoading, setIsLoading] = useState(true);
@@ -627,13 +159,32 @@
             const [toast, setToast] = useState({ show: false, message: '' });
             const intervalRef = useRef(null);
 
-            // Show toast notification
-            const showToast = useCallback((message) => {
-                setToast({ show: true, message });
-                setTimeout(() => setToast({ show: false, message: '' }), 2000);
-            }, []);
+            const showToast = useCallback((message) => { setToast({ show: true, message }); setTimeout(() => setToast({ show: false, message: '' }), 2000); }, []);
 
-            // Fetch current state
+            const placePattern = useCallback(async (patternKey, rotation, centerX, centerY) => {
+                const pattern = PATTERNS[patternKey];
+                if (!pattern || !gameState) return;
+                try {
+                    const rotatedCells = rotateCells(pattern.cells, rotation);
+                    const minX = Math.min(...rotatedCells.map(c => c[0]));
+                    const maxX = Math.max(...rotatedCells.map(c => c[0]));
+                    const minY = Math.min(...rotatedCells.map(c => c[1]));
+                    const maxY = Math.max(...rotatedCells.map(c => c[1]));
+                    const offsetX = centerX - Math.floor((minX + maxX) / 2);
+                    const offsetY = centerY - Math.floor((minY + maxY) / 2);
+                    const endpoint = selectedTeam === 1 ? 'set_red' : 'set_blue';
+                    for (const [cx, cy] of rotatedCells) {
+                        const x = (cx + offsetX + gameState.width) % gameState.width;
+                        const y = (cy + offsetY + gameState.height) % gameState.height;
+                        await fetch(`${API_BASE}/api/${endpoint}/${x}/${y}`, { method: 'POST' });
+                    }
+                    const response = await fetch(`${API_BASE}/api/state`);
+                    const data = await response.json();
+                    setGameState(data);
+                    showToast(`已放置: ${pattern.name} (${rotation}°)`);
+                } catch (err) { setError(err.message); }
+            }, [gameState, selectedTeam, showToast]);
+
             const fetchState = useCallback(async () => {
                 try {
                     const response = await fetch(`${API_BASE}/api/state`);
@@ -642,510 +193,165 @@
                     setGameState(data);
                     setGridSize({ width: data.width, height: data.height });
                     setIsLoading(false);
-                } catch (err) {
-                    setError(err.message);
-                    setIsLoading(false);
-                }
+                } catch (err) { setError(err.message); setIsLoading(false); }
             }, []);
 
-            // Initialize grid
             const initGrid = useCallback(async (width, height) => {
                 try {
-                    const response = await fetch(`${API_BASE}/api/init`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ width, height }),
-                    });
+                    const response = await fetch(`${API_BASE}/api/init`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ width, height }) });
                     const data = await response.json();
                     setGameState(data);
                     setGridSize({ width, height });
                     showToast(`网格已初始化: ${width}x${height}`);
-                } catch (err) {
-                    setError(err.message);
-                }
+                } catch (err) { setError(err.message); }
             }, [showToast]);
 
-            // Set cell to specific team
             const setCell = useCallback(async (x, y, team) => {
                 try {
                     const endpoint = team === 1 ? 'set_red' : team === 2 ? 'set_blue' : 'set_dead';
-                    const response = await fetch(`${API_BASE}/api/${endpoint}/${x}/${y}`, {
-                        method: 'POST',
-                    });
+                    const response = await fetch(`${API_BASE}/api/${endpoint}/${x}/${y}`, { method: 'POST' });
                     const data = await response.json();
                     setGameState(data);
-                } catch (err) {
-                    setError(err.message);
-                }
+                } catch (err) { setError(err.message); }
             }, []);
 
-            // Toggle cell
-            const toggleCell = useCallback(async (x, y) => {
-                try {
-                    const response = await fetch(`${API_BASE}/api/toggle/${x}/${y}`, {
-                        method: 'POST',
-                    });
-                    const data = await response.json();
-                    setGameState(data);
-                } catch (err) {
-                    setError(err.message);
-                }
-            }, []);
-
-            // Step one generation
             const step = useCallback(async () => {
                 try {
-                    const response = await fetch(`${API_BASE}/api/step`, {
-                        method: 'POST',
-                    });
+                    const response = await fetch(`${API_BASE}/api/step`, { method: 'POST' });
                     const data = await response.json();
                     setGameState(data);
-                } catch (err) {
-                    setError(err.message);
-                }
+                } catch (err) { setError(err.message); }
             }, []);
 
-            // Randomize grid
             const randomize = useCallback(async (density = 0.3) => {
                 try {
-                    const response = await fetch(`${API_BASE}/api/randomize`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ density }),
-                    });
+                    const response = await fetch(`${API_BASE}/api/randomize`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ density }) });
                     const data = await response.json();
                     setGameState(data);
                     showToast('网格已随机化');
-                } catch (err) {
-                    setError(err.message);
-                }
+                } catch (err) { setError(err.message); }
             }, [showToast]);
 
-            // Clear grid
             const clear = useCallback(async () => {
                 try {
-                    const response = await fetch(`${API_BASE}/api/clear`, {
-                        method: 'POST',
-                    });
+                    const response = await fetch(`${API_BASE}/api/clear`, { method: 'POST' });
                     const data = await response.json();
                     setGameState(data);
                     setIsPlaying(false);
                     showToast('网格已清空');
-                } catch (err) {
-                    setError(err.message);
-                }
+                } catch (err) { setError(err.message); }
             }, [showToast]);
 
-            // Play/Pause toggle
-            const togglePlay = useCallback(() => {
-                setIsPlaying(prev => !prev);
-            }, []);
-
-            // Handle resize
+            const togglePlay = useCallback(() => setIsPlaying(prev => !prev), []);
             const resize = useCallback((preset) => {
-                const sizes = {
-                    small: { width: 30, height: 20, cell: 16 },
-                    medium: { width: 60, height: 40, cell: 12 },
-                    large: { width: 80, height: 50, cell: 10 },
-                };
+                const sizes = { small: { width: 30, height: 20, cell: 16 }, medium: { width: 60, height: 40, cell: 12 }, large: { width: 80, height: 50, cell: 10 } };
                 const config = sizes[preset] || sizes.medium;
                 initGrid(config.width, config.height);
                 setCellSize(config.cell);
             }, [initGrid]);
 
-            // Auto-step effect
             useEffect(() => {
-                if (isPlaying) {
-                    intervalRef.current = setInterval(step, 1000 / speed);
-                } else {
-                    if (intervalRef.current) {
-                        clearInterval(intervalRef.current);
-                    }
-                }
-                return () => {
-                    if (intervalRef.current) {
-                        clearInterval(intervalRef.current);
-                    }
-                };
+                if (isPlaying) intervalRef.current = setInterval(step, 1000 / speed);
+                else if (intervalRef.current) clearInterval(intervalRef.current);
+                return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
             }, [isPlaying, speed, step]);
 
-            // Initial fetch
-            useEffect(() => {
-                fetchState();
-            }, [fetchState]);
+            useEffect(() => { fetchState(); }, [fetchState]);
 
-            return {
-                gameState,
-                isPlaying,
-                setIsPlaying,
-                speed,
-                setSpeed,
-                selectedTeam,
-                setSelectedTeam,
-                gridSize,
-                cellSize,
-                isLoading,
-                error,
-                toast,
-                togglePlay,
-                step,
-                randomize,
-                clear,
-                setCell,
-                resize,
-            };
+            return { gameState, isPlaying, speed, setSpeed, selectedTeam, setSelectedTeam, selectedPattern, setSelectedPattern, patternRotation, setPatternRotation, placePattern, gridSize, cellSize, isLoading, error, toast, togglePlay, step, randomize, clear, setCell, resize };
         };
 
-        // Grid Component
-        const GridCanvas = ({ cells, width, height, cellSize, selectedTeam, onCellSet }) => {
+        const GridCanvas = ({ cells, width, height, cellSize, selectedTeam, selectedPattern, patternRotation, onCellSet, onPlacePattern }) => {
             const isPaintingRef = useRef(false);
             const lastCellRef = useRef(null);
-
-            const handleCellClick = (x, y) => {
-                onCellSet(x, y, selectedTeam);
-            };
-
             const handleMouseDown = (e, x, y) => {
-                isPaintingRef.current = true;
-                lastCellRef.current = `${x},${y}`;
-                onCellSet(x, y, selectedTeam);
+                if (selectedPattern) onPlacePattern(patternRotation, x, y);
+                else { isPaintingRef.current = true; lastCellRef.current = `${x},${y}`; onCellSet(x, y, selectedTeam); }
             };
-
             const handleMouseEnter = (e, x, y) => {
-                if (isPaintingRef.current && lastCellRef.current !== `${x},${y}`) {
-                    lastCellRef.current = `${x},${y}`;
-                    onCellSet(x, y, selectedTeam);
-                }
+                if (selectedPattern || !isPaintingRef.current) return;
+                if (lastCellRef.current !== `${x},${y}`) { lastCellRef.current = `${x},${y}`; onCellSet(x, y, selectedTeam); }
             };
+            const handleMouseUp = () => { isPaintingRef.current = false; lastCellRef.current = null; };
+            useEffect(() => { window.addEventListener('mouseup', handleMouseUp); return () => window.removeEventListener('mouseup', handleMouseUp); }, []);
+            const getCellClass = (cell) => cell === 1 ? 'red' : cell === 2 ? 'blue' : '';
+            return (<div className="grid-canvas" style={{ gridTemplateColumns: `repeat(${width}, ${cellSize}px)`, gridTemplateRows: `repeat(${height}, ${cellSize}px)`, cursor: selectedPattern ? 'pointer' : 'crosshair' }}>
+                {cells && cells.map((row, y) => row.map((cell, x) => (<div key={`${x}-${y}`} className={`cell ${getCellClass(cell)}`} onMouseDown={(e) => handleMouseDown(e, x, y)} onMouseEnter={(e) => handleMouseEnter(e, x, y)} />)))}
+            </div>);
+        };
 
-            const handleMouseUp = () => {
-                isPaintingRef.current = false;
-                lastCellRef.current = null;
-            };
-
-            useEffect(() => {
-                window.addEventListener('mouseup', handleMouseUp);
-                return () => window.removeEventListener('mouseup', handleMouseUp);
-            }, []);
-
-            const getCellClass = (cell) => {
-                if (cell === 1) return 'red';
-                if (cell === 2) return 'blue';
-                return '';
-            };
-
-            return (
-                <div
-                    className="grid-canvas"
-                    style={{
-                        gridTemplateColumns: `repeat(${width}, ${cellSize}px)`,
-                        gridTemplateRows: `repeat(${height}, ${cellSize}px)`,
-                    }}
-                >
-                    {cells && cells.map((row, y) =>
-                        row.map((cell, x) => (
-                            <div
-                                key={`${x}-${y}`}
-                                className={`cell ${getCellClass(cell)}`}
-                                onClick={() => handleCellClick(x, y)}
-                                onMouseDown={(e) => handleMouseDown(e, x, y)}
-                                onMouseEnter={(e) => handleMouseEnter(e, x, y)}
-                            />
-                        ))
+        const ControlPanel = ({ isPlaying, onTogglePlay, onStep, onRandomize, onClear, speed, onSpeedChange, selectedTeam, onTeamSelect, selectedPattern, onPatternSelect, patternRotation, onRotationChange, currentPreset, onResize }) => (
+            <div className="controls">
+                <div className="control-group"><span className="control-label">模拟</span>
+                    <div className="button-group">
+                        <button className={`btn ${isPlaying ? 'active' : 'primary'}`} onClick={onTogglePlay}>{isPlaying ? <PauseIcon /> : <PlayIcon />}{isPlaying ? '暂停' : '播放'}</button>
+                        <button className="btn" onClick={onStep}><StepIcon />单步</button>
+                    </div>
+                </div>
+                <div className="control-group"><span className="control-label">阵营</span>
+                    <div className="button-group">
+                        <button className={`btn red-team ${selectedTeam === 1 ? 'active' : ''}`} onClick={() => onTeamSelect(1)}><span style={{ width: 10, height: 10, background: '#ff3366', borderRadius: '50%', display: 'inline-block' }}></span>红</button>
+                        <button className={`btn blue-team ${selectedTeam === 2 ? 'active' : ''}`} onClick={() => onTeamSelect(2)}><span style={{ width: 10, height: 10, background: '#3366ff', borderRadius: '50%', display: 'inline-block' }}></span>蓝</button>
+                    </div>
+                </div>
+                <div className="control-group patterns-section">
+                    <span className="control-label">经典结构 {selectedPattern && `→ ${PATTERNS[selectedPattern]?.name}`}</span>
+                    <div className="patterns-container">
+                        {Object.entries(PATTERNS).map(([key, pattern]) => (<button key={key} className={`pattern-btn ${selectedPattern === key ? 'active' : ''}`} onClick={() => onPatternSelect(selectedPattern === key ? null : key)}>{pattern.name}<PatternPreview pattern={pattern} rotation={selectedPattern === key ? patternRotation : 0} /></button>))}
+                    </div>
+                    {selectedPattern && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px' }}>
+                            <span className="control-label" style={{ margin: 0 }}>旋转:</span>
+                            <div className="rotate-group">
+                                {[0, 90, 180, 270].map(r => (<button key={r} className={`rotate-btn ${patternRotation === r ? 'active' : ''}`} onClick={() => onRotationChange(r)}>{r}°</button>))}
+                            </div>
+                        </div>
                     )}
                 </div>
-            );
-        };
-
-        // Control Panel Component
-        const ControlPanel = ({
-            isPlaying,
-            onTogglePlay,
-            onStep,
-            onRandomize,
-            onClear,
-            speed,
-            onSpeedChange,
-            selectedTeam,
-            onTeamSelect,
-            currentPreset,
-            onResize,
-        }) => {
-            return (
-                <div className="controls">
-                    <div className="control-group">
-                        <span className="control-label">模拟</span>
-                        <div className="button-group">
-                            <button className={`btn ${isPlaying ? 'active' : 'primary'}`} onClick={onTogglePlay}>
-                                {isPlaying ? <PauseIcon /> : <PlayIcon />}
-                                {isPlaying ? '暂停' : '播放'}
-                            </button>
-                            <button className="btn" onClick={onStep}>
-                                <StepIcon />
-                                单步
-                            </button>
-                        </div>
-                    </div>
-
-                    <div className="control-group">
-                        <span className="control-label">阵营选择</span>
-                        <div className="button-group">
-                            <button
-                                className={`btn red-team ${selectedTeam === 1 ? 'active' : ''}`}
-                                onClick={() => onTeamSelect(1)}
-                            >
-                                <span style={{ width: 10, height: 10, background: '#ff3366', borderRadius: '50%', display: 'inline-block' }}></span>
-                                我方 (红)
-                            </button>
-                            <button
-                                className={`btn blue-team ${selectedTeam === 2 ? 'active' : ''}`}
-                                onClick={() => onTeamSelect(2)}
-                            >
-                                <span style={{ width: 10, height: 10, background: '#3366ff', borderRadius: '50%', display: 'inline-block' }}></span>
-                                敌方 (蓝)
-                            </button>
-                        </div>
-                    </div>
-
-                    <div className="control-group">
-                        <span className="control-label">种群</span>
-                        <div className="button-group">
-                            <button className="btn" onClick={() => onRandomize(0.3)}>
-                                <RefreshIcon />
-                                随机
-                            </button>
-                            <button className="btn" onClick={onClear}>
-                                <TrashIcon />
-                                清空
-                            </button>
-                        </div>
-                    </div>
-
-                    <div className="control-group">
-                        <span className="control-label">速度</span>
-                        <div className="slider-container">
-                            <input
-                                type="range"
-                                className="slider"
-                                min="1"
-                                max="30"
-                                value={speed}
-                                onChange={(e) => onSpeedChange(Number(e.target.value))}
-                            />
-                            <span className="slider-value">{speed} 代/秒</span>
-                        </div>
-                    </div>
-
-                    <div className="control-group">
-                        <span className="control-label">网格大小</span>
-                        <div className="button-group">
-                            <button
-                                className={`preset-btn ${currentPreset === 'small' ? 'active' : ''}`}
-                                onClick={() => onResize('small')}
-                            >
-                                小
-                            </button>
-                            <button
-                                className={`preset-btn ${currentPreset === 'medium' ? 'active' : ''}`}
-                                onClick={() => onResize('medium')}
-                            >
-                                中
-                            </button>
-                            <button
-                                className={`preset-btn ${currentPreset === 'large' ? 'active' : ''}`}
-                                onClick={() => onResize('large')}
-                            >
-                                大
-                            </button>
-                        </div>
+                <div className="control-group"><span className="control-label">种群</span>
+                    <div className="button-group">
+                        <button className="btn" onClick={() => onRandomize(0.3)}><RefreshIcon />随机</button>
+                        <button className="btn" onClick={onClear}><TrashIcon />清空</button>
                     </div>
                 </div>
-            );
-        };
-
-        // Rules Component
-        const Rules = () => (
-            <div className="rules">
-                <h3>游戏规则</h3>
-                <div className="rules-grid">
-                    <div className="rule">
-                        <div className="rule-icon die">1</div>
-                        <span>孤独死亡：活细胞邻居少于 2 个时死亡</span>
+                <div className="control-group"><span className="control-label">速度</span>
+                    <div className="slider-container">
+                        <input type="range" className="slider" min="1" max="30" value={speed} onChange={(e) => onSpeedChange(Number(e.target.value))} />
+                        <span className="slider-value">{speed} 代/秒</span>
                     </div>
-                    <div className="rule">
-                        <div className="rule-icon die">2</div>
-                        <span>过度拥挤：活细胞邻居超过 3 个时死亡</span>
-                    </div>
-                    <div className="rule">
-                        <div className="rule-icon red">3</div>
-                        <span>生存：2-3 个邻居时存活</span>
-                    </div>
-                    <div className="rule">
-                        <div className="rule-icon blue">4</div>
-                        <span>繁殖：死细胞恰好 3 个邻居时复活，多数阵营决定颜色</span>
+                </div>
+                <div className="control-group"><span className="control-label">大小</span>
+                    <div className="button-group">
+                        <button className={`preset-btn ${currentPreset === 'small' ? 'active' : ''}`} onClick={() => onResize('small')}>小</button>
+                        <button className={`preset-btn ${currentPreset === 'medium' ? 'active' : ''}`} onClick={() => onResize('medium')}>中</button>
+                        <button className={`preset-btn ${currentPreset === 'large' ? 'active' : ''}`} onClick={() => onResize('large')}>大</button>
                     </div>
                 </div>
             </div>
         );
 
-        // Toast Component
-        const Toast = ({ show, message }) => (
-            <div className={`toast ${show ? 'show' : ''}`}>
-                {message}
-            </div>
-        );
+        const Rules = () => (<div className="rules"><h3>游戏规则</h3><div className="rules-grid"><div className="rule"><div className="rule-icon die">1</div><span>孤独死亡：活细胞邻居少于 2 个时死亡</span></div><div className="rule"><div className="rule-icon die">2</div><span>过度拥挤：活细胞邻居超过 3 个时死亡</span></div><div className="rule"><div className="rule-icon red">3</div><span>正常生存：2-3 个邻居时存活</span></div><div className="rule"><div className="rule-icon blue">4</div><span>多数繁殖：恰好 3 个邻居时复活，多数阵营决定颜色</span></div></div></div>);
+        const Toast = ({ show, message }) => (<div className={`toast ${show ? 'show' : ''}`}>{message}</div>);
+        const ErrorScreen = ({ message }) => (<div className="app" style={{ justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}><div style={{ textAlign: 'center', padding: '40px' }}><h2 style={{ marginBottom: '12px', color: '#ff3366' }}>连接失败</h2><p style={{ color: '#666680' }}>无法连接到服务器。请确保 Rust 后端正在运行: <code style={{ background: '#1a1a2e', padding: '4px 8px', borderRadius: '4px' }}>cargo run</code></p><p style={{ color: '#666680', fontSize: '12px', marginTop: '8px' }}>错误: {message}</p></div></div>);
 
-        // Error Screen Component
-        const ErrorScreen = ({ message }) => (
-            <div className="app" style={{ justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
-                <div style={{ textAlign: 'center', padding: '40px' }}>
-                    <div style={{
-                        width: '80px',
-                        height: '80px',
-                        margin: '0 auto 24px',
-                        background: 'rgba(255, 51, 102, 0.2)',
-                        borderRadius: '50%',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center'
-                    }}>
-                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#ff3366" strokeWidth="2">
-                            <circle cx="12" cy="12" r="10"></circle>
-                            <line x1="12" y1="8" x2="12" y2="12"></line>
-                            <line x1="12" y1="16" x2="12.01" y2="16"></line>
-                        </svg>
-                    </div>
-                    <h2 style={{ marginBottom: '12px', color: '#ff3366' }}>连接失败</h2>
-                    <p style={{ color: '#666680', marginBottom: '24px' }}>
-                        无法连接到生命游戏服务器。
-                    </p>
-                    <p style={{ color: '#666680', fontSize: '14px' }}>
-                        请确保 Rust 后端正在运行:<br />
-                        <code style={{
-                            background: '#1a1a2e',
-                            padding: '4px 8px',
-                            borderRadius: '4px',
-                            fontFamily: 'JetBrains Mono, monospace'
-                        }}>
-                            cargo run
-                        </code>
-                    </p>
-                    <p style={{ color: '#666680', fontSize: '12px', marginTop: '8px' }}>
-                        错误: {message}
-                    </p>
-                </div>
-            </div>
-        );
-
-        // Main App Component
         const App = () => {
-            const {
-                gameState,
-                isPlaying,
-                speed,
-                setSpeed,
-                selectedTeam,
-                setSelectedTeam,
-                gridSize,
-                cellSize,
-                isLoading,
-                error,
-                toast,
-                togglePlay,
-                step,
-                randomize,
-                clear,
-                setCell,
-                resize,
-            } = useGameState();
-
-            if (isLoading) {
-                return (
-                    <div className="loading">
-                        <div className="loading-spinner"></div>
-                        <div className="loading-text">初始化生命引擎...</div>
-                    </div>
-                );
-            }
-
-            if (error) {
-                return <ErrorScreen message={error} />;
-            }
-
+            const { gameState, isPlaying, speed, setSpeed, selectedTeam, setSelectedTeam, selectedPattern, setSelectedPattern, patternRotation, setPatternRotation, placePattern, gridSize, cellSize, isLoading, error, toast, togglePlay, step, randomize, clear, setCell, resize } = useGameState();
+            if (isLoading) return (<div className="loading"><div className="loading-spinner"></div><div className="loading-text">初始化生命引擎...</div></div>);
+            if (error) return <ErrorScreen message={error} />;
             const totalCells = gridSize.width * gridSize.height;
             const currentPreset = totalCells === 600 ? 'medium' : totalCells === 30 * 20 ? 'small' : totalCells === 80 * 50 ? 'large' : null;
-
-            return (
-                <div className="app">
-                    {/* Header */}
-                    <header className="header">
-                        <div className="logo">
-                            <div className="logo-icon">
-                                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#0a0a0f" strokeWidth="2.5">
-                                    <circle cx="8" cy="8" r="4" fill="#ff3366" stroke="#ff3366"></circle>
-                                    <circle cx="16" cy="8" r="4" fill="#3366ff" stroke="#3366ff"></circle>
-                                    <circle cx="8" cy="16" r="4" fill="#3366ff" stroke="#3366ff"></circle>
-                                    <circle cx="16" cy="16" r="4" fill="#ff3366" stroke="#ff3366"></circle>
-                                </svg>
-                            </div>
-                            <div className="logo-text">
-                                <h1>两阵营生命游戏</h1>
-                                <p>红色 vs 蓝色 · 多数原则繁殖</p>
-                            </div>
-                        </div>
-                        <div className="stats">
-                            <div className="stat generation">
-                                <div className="stat-value">{gameState?.generation || 0}</div>
-                                <div className="stat-label">代数</div>
-                            </div>
-                            <div className="stat red">
-                                <div className="stat-value">{gameState?.red_count || 0}</div>
-                                <div className="stat-label">我方 (红)</div>
-                            </div>
-                            <div className="stat blue">
-                                <div className="stat-value">{gameState?.blue_count || 0}</div>
-                                <div className="stat-label">敌方 (蓝)</div>
-                            </div>
-                        </div>
-                    </header>
-
-                    {/* Grid */}
-                    <div className="grid-container">
-                        <GridCanvas
-                            cells={gameState?.cells}
-                            width={gridSize.width}
-                            height={gridSize.height}
-                            cellSize={cellSize}
-                            selectedTeam={selectedTeam}
-                            onCellSet={setCell}
-                        />
-                    </div>
-
-                    {/* Controls */}
-                    <ControlPanel
-                        isPlaying={isPlaying}
-                        onTogglePlay={togglePlay}
-                        onStep={step}
-                        onRandomize={randomize}
-                        onClear={clear}
-                        speed={speed}
-                        onSpeedChange={setSpeed}
-                        selectedTeam={selectedTeam}
-                        onTeamSelect={setSelectedTeam}
-                        currentPreset={currentPreset}
-                        onResize={resize}
-                    />
-
-                    {/* Rules */}
-                    <Rules />
-
-                    {/* Toast */}
-                    <Toast show={toast.show} message={toast.message} />
-                </div>
-            );
+            return (<div className="app">
+                <header className="header">
+                    <div className="logo"><div className="logo-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#0a0a0f" strokeWidth="2.5"><circle cx="8" cy="8" r="4" fill="#ff3366"></circle><circle cx="16" cy="8" r="4" fill="#3366ff"></circle><circle cx="8" cy="16" r="4" fill="#3366ff"></circle><circle cx="16" cy="16" r="4" fill="#ff3366"></circle></svg></div><div className="logo-text"><h1>两阵营生命游戏</h1><p>红色 vs 蓝色 · 多数原则繁殖</p></div></div>
+                    <div className="stats"><div className="stat"><div className="stat-value" style={{ color: '#e0e0e0' }}>{gameState?.generation || 0}</div><div className="stat-label">代数</div></div><div className="stat"><div className="stat-value" style={{ color: '#ff3366' }}>{gameState?.red_count || 0}</div><div className="stat-label">红</div></div><div className="stat"><div className="stat-value" style={{ color: '#3366ff' }}>{gameState?.blue_count || 0}</div><div className="stat-label">蓝</div></div></div>
+                </header>
+                <div className="grid-container"><GridCanvas cells={gameState?.cells} width={gridSize.width} height={gridSize.height} cellSize={cellSize} selectedTeam={selectedTeam} selectedPattern={selectedPattern} patternRotation={patternRotation} onCellSet={setCell} onPlacePattern={(rot, x, y) => placePattern(selectedPattern, rot, x, y)} /></div>
+                <ControlPanel isPlaying={isPlaying} onTogglePlay={togglePlay} onStep={step} onRandomize={randomize} onClear={clear} speed={speed} onSpeedChange={setSpeed} selectedTeam={selectedTeam} onTeamSelect={setSelectedTeam} selectedPattern={selectedPattern} onPatternSelect={setSelectedPattern} patternRotation={patternRotation} onRotationChange={setPatternRotation} currentPreset={currentPreset} onResize={resize} />
+                <Rules />
+                <Toast show={toast.show} message={toast.message} />
+            </div>);
         };
 
-        // Render App
         const root = ReactDOM.createRoot(document.getElementById('root'));
         root.render(<App />);
     </script>
