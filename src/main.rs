@@ -9,6 +9,7 @@ mod game;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 use tower_http::cors::{Any, CorsLayer};
+use tower_http::services::ServeDir;
 use tracing::info;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
@@ -38,8 +39,10 @@ async fn main() {
         .allow_methods(Any)
         .allow_headers(Any);
 
-    // Create router with CORS
-    let app = create_router(state).layer(cors);
+    // Create router with CORS and static file serving
+    let app = create_router(state)
+        .fallback_service(ServeDir::new("frontend"))
+        .layer(cors);
 
     // Start server
     let listener = tokio::net::TcpListener::bind("127.0.0.1:8080")
